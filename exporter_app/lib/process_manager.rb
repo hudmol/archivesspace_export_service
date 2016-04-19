@@ -1,30 +1,28 @@
 class ProcessManager
 
   def initialize
-    @threads_by_job = {}
+    @processes_by_job = {}
   end
 
   def start_job(job, completed_callback)
     process = Process.new(job, completed_callback)
-    worker = Worker.new(process)
-
-    worker.call
-
-    @threads_by_job[job] = {process: process, worker: worker}
+    @processes_by_job[job] = process
+    process.call
   end
 
   def shutdown
-    @threads_by_job.each do |job, state|
-      state[:process].terminate!
-      state[:worker].join
+    @processes_by_job.each do |job, process|
+      process.terminate!
     end
   end
 
 
-  class Worker
+  class Process
 
-    def initialize(process)
-      @process = process
+    def initialize(job, completed_callback)
+      @job = job
+      @callback = completed_callback
+      @should_terminate = java.util.concurrent.atomic.AtomicBoolean.new(false)
       @thread = :worker_not_started
     end
 
@@ -34,15 +32,15 @@ class ProcessManager
 
         begin
           5.times do
-            $stderr.puts "Worker running with ID: #{Thread.current} and job #{@process.job}"
+            $stderr.puts "Worker running with ID: #{Thread.current} and job #{@job}"
 
-            if @process.job.should_stop?(Time.now)
+            if @job.should_stop?(Time.now)
               $stderr.puts "Job stopped! #{Thread.current}"
               status = 'stopped'
               break
             end
 
-            if @process.terminated?
+            if terminated?
               $stderr.puts "Worker told to terminate! #{Thread.current}"
               status = 'terminated'
               break
@@ -57,7 +55,7 @@ class ProcessManager
         ensure
           begin
             # THINKME: This callback happens on a different thread
-            @process.completed_callback.call(@process.job, status)
+            @callback.call(@job, status)
           rescue
             $stderr.puts($!)
             $stderr.puts($@.join("\n"))
@@ -66,24 +64,9 @@ class ProcessManager
       end
     end
 
-    def join
-      @thread.join unless @thread == :worker_not_started
-    end
-
-  end
-
-
-  class Process
-    attr_reader :job, :completed_callback
-
-    def initialize(job, completed_callback)
-      @job = job
-      @completed_callback = completed_callback
-      @should_terminate = java.util.concurrent.atomic.AtomicBoolean.new(false)
-    end
-
     def terminate!
       @should_terminate.set(true)
+      @thread.join unless @thread == :worker_not_started
     end
 
     def terminated?

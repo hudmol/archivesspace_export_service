@@ -36,6 +36,7 @@ class ExporterApp
                                       job_state_storage.job_completed(job, status)
                                       $stderr.puts(job_state_storage.inspect)
                                     })
+
         else
           puts "Not time to run #{job}"
         end
