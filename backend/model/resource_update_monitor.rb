@@ -29,6 +29,10 @@ class ResourceUpdateMonitor
         mods = mods.where(:repo_id => @repo_id)
       end
 
+      if @start_id
+        mods = mods.where(:identifier => @start_id)
+      end
+
       mods = mods.select(:id, :identifier, :publish, :suppressed)
 
       mods.each do |res|
