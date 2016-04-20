@@ -43,11 +43,16 @@ class ResourceUpdateMonitor
         .select(:uri)
 
       dels.each do |res|
-        removes << res[:uri].split('/')[-1]
+        ref = JSONModel.parse_reference(res[:uri])
+        if @repo_id
+          repo = JSONModel.parse_reference(ref[:repository])
+          removes << ref[:id] if @repo_id == repo[:id]
+        else
+          removes << ref[:id]
+        end
       end
 
     end
-
 
     {'timestamp' => timestamp, 'adds' => adds, 'removes' => removes}
   end
