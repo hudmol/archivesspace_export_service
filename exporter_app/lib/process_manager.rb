@@ -31,29 +31,15 @@ class ProcessManager
         status = 'completed'
 
         begin
-          5.times do
-            $stderr.puts "Worker running with ID: #{Thread.current} and job #{@job}"
-
-            if @job.should_stop?(Time.now)
-              $stderr.puts "Job stopped! #{Thread.current}"
-              status = 'stopped'
-              break
-            end
-
-            if terminated?
-              $stderr.puts "Worker told to terminate! #{Thread.current}"
-              status = 'terminated'
-              break
-            end
-
-            sleep 1
-          end
+          @job.task.call(self)
         rescue
           $stderr.puts($!)
           $stderr.puts($@.join("\n"))
           status = 'failed'
         ensure
           begin
+            status = terminated? ? 'terminated' : status
+
             # THINKME: This callback happens on a different thread
             @callback.call(@job, status)
           rescue
@@ -62,6 +48,10 @@ class ProcessManager
           end
         end
       end
+    end
+
+    def running?
+      !@job.should_stop?(Time.now) && !terminated?
     end
 
     def terminate!

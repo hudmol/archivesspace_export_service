@@ -5,8 +5,8 @@ class ExporterApp
   def self.main
 
     # Load everything
-    ["lib", "job_types"].each do |dir|
-      Dir.glob(base_dir("#{dir}/*")).each do |file|
+    ["lib", "job_types", "tasks"].each do |dir|
+      Dir.glob(base_dir("#{dir}/*.rb")).each do |file|
         load(File.absolute_path(file))
       end
     end
