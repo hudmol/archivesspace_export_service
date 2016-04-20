@@ -9,13 +9,13 @@ class SQLiteWorkQueue
     create_tables
   end
 
-  def push(resource_id, extra_args)
+  def push(action, resource_id, extra_args = {})
     with_connection do |conn|
-      extra_args_columns = extra_args.keys.join(', ')
-      extra_args_placeholders = (['?'] * extra_args.length).join(', ')
+      extra_args_columns = extra_args.empty? ? '' : (', ' + extra_args.keys.join(', '))
+      extra_args_placeholders = extra_args.empty? ? '' : (', ' + (['?'] * extra_args.length).join(', '))
       prepare(conn,
-              "insert into work_queue (resource_id, #{extra_args_columns}) values (?, #{extra_args_placeholders})",
-              [resource_id, *extra_args.values]) do |statement|
+              "insert into work_queue (action, resource_id#{extra_args_columns}) values (?, ?#{extra_args_placeholders})",
+              [action, resource_id, *extra_args.values]) do |statement|
         statement.execute_update
       end
     end
@@ -63,17 +63,46 @@ class SQLiteWorkQueue
     end
   end
 
+  def optimize
+    # We can save ourselves some work by trimming the work queue to remove redundancy.
+
+    with_connection do |conn|
+      # If an 'add' entry for a resource is followed by a 'remove' entry, we can
+      # discard the 'add' (since we would just delete the record moments later
+      # anyway).
+      prepare(conn, "delete from work_queue where id in " +
+                    " (select wq1.id from work_queue wq1 " +
+                    "   inner join work_queue wq2 on wq1.resource_id = wq2.resource_id " +
+                    "   where wq1.action = 'add' AND wq2.action = 'remove' " +
+                    "     AND wq1.id < wq2.id)") do |statement|
+        statement.execute_update
+      end
+
+      # If there are two 'add' entries for the same resouce ID, just keep the
+      # first one.
+      prepare(conn, "delete from work_queue " +
+                    "where action = 'add' and id not in " +
+                    " (select min(id) from work_queue " +
+                    "    where action = 'add' group by resource_id)") do |statement|
+        statement.execute_update
+      end
+    end
+  end
+
   private
 
   def with_connection
     connection = nil
     begin
       connection = java.sql.DriverManager.get_connection("jdbc:sqlite:#{@db_file}")
+      yield connection
     ensure
-      connection.close
+      if connection
+        connection.close
+      else
+        raise "DB Connection failed"
+      end
     end
-
-    connection
   end
 
   def prepare(connection, sql, arguments = [])
@@ -90,15 +119,17 @@ class SQLiteWorkQueue
     end
 
     yield statement
+  rescue
+    $stderr.puts("SQL failed: #{sql}")
   ensure
-    statement.close
+    statement.close if statement
   end
 
   def create_tables
     with_connection do |conn|
       statement = conn.create_statement
       statement.execute_update("create table if not exists work_queue" +
-                               " (id integer primary key autoincrement, resource_id integer, identifier text)")
+                               " (id integer primary key autoincrement, action text, resource_id integer, identifier text)")
 
       statement.execute_update("create table if not exists status" +
                                " (key primary key, int_value integer)")

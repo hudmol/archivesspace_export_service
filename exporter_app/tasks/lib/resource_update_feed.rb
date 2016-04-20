@@ -12,7 +12,7 @@ class ResourceUpdateFeed
   end
 
   def updates_since(epoch_time)
-    raise json_get('/resource-update-feed', :timestamp => epoch_time).inspect
+    json_get('/resource-update-feed', :timestamp => epoch_time)
   end
 
   private
