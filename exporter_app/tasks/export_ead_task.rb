@@ -1,5 +1,6 @@
 require 'fileutils'
 require_relative 'lib/sqlite_work_queue'
+require_relative 'lib/resource_update_feed'
 
 class ExportEADTask
 
@@ -12,10 +13,16 @@ class ExportEADTask
   end
 
   def call(process)
+    config = ExporterApp.config
+
     now = Time.now
     last_read_time = @work_queue.get_int_status("last_read_time") { 0 }
 
-    # do the needful
+    feed = ResourceUpdateFeed.new(config[:aspace_backend_url], config[:aspace_username], config[:aspace_password])
+
+    updates = feed.updates_since(last_read_time)
+
+    p updates
 
     @work_queue.put_int_status("last_read_time", now.to_i)
   end

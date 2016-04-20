@@ -48,6 +48,11 @@ class ExporterApp
 
   end
 
+  def self.config
+    AppConfig.load(base_dir("config/config.rb"))
+  end
+
+
   def self.base_dir(path = nil)
     base = File.dirname(__FILE__)
 
