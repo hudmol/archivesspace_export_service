@@ -1,7 +1,22 @@
 class ResourceUpdateMonitor
 
   def initialize()
+    @repo_id = nil
+    @start_id = nil
+    @end_id = nil
   end
+
+
+  def repo_id(repo_id)
+    @repo_id = repo_id
+  end
+
+
+  def identifier(start_id, end_id = nil)
+    @start_id = start_id
+    @end_id = end_id
+  end
+
 
   def updates_since(timestamp)
     adds = []
@@ -9,7 +24,12 @@ class ResourceUpdateMonitor
     mtime = Time.at(timestamp.to_i)
     DB.open do |db|
       mods = db[:resource].where(Sequel.qualify(:resource, :system_mtime) > mtime)
-        .select(:id, :identifier, :publish, :suppressed)
+
+      if @repo_id
+        mods = mods.where(:repo_id => @repo_id)
+      end
+
+      mods = mods.select(:id, :identifier, :publish, :suppressed)
 
       mods.each do |res|
         if res[:publish] == 1 && res[:suppressed] == 0
