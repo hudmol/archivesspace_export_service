@@ -48,11 +48,13 @@ class ResourceUpdateMonitor
 
       dels.each do |res|
         ref = JSONModel.parse_reference(res[:uri])
-        if @repo_id
-          repo = JSONModel.parse_reference(ref[:repository])
-          removes << ref[:id] if @repo_id == repo[:id]
-        else
-          removes << ref[:id]
+        if ref[:type] == 'resource'
+          if @repo_id
+            repo = JSONModel.parse_reference(ref[:repository])
+            removes << ref[:id] if @repo_id == repo[:id]
+          else
+            removes << ref[:id]
+          end
         end
       end
 
