@@ -20,10 +20,14 @@ class ResourceUpdateMonitor
     if @end_id
       @parsed_end_id = JSON.parse(@end_id)
       @parsed_start_id.each_index do |ix|
-        if @parsed_start_id[ix] < @parsed_end_id[ix]
-          @id_range << {:low => @parsed_start_id[ix], :hi => @parsed_end_id[ix]}
+        if @parsed_start_id[ix] && @parsed_end_id[ix]
+          if @parsed_start_id[ix] < @parsed_end_id[ix]
+            @id_range << {:low => @parsed_start_id[ix], :hi => @parsed_end_id[ix], :skip => false}
+          else
+            @id_range << {:hi => @parsed_start_id[ix], :low => @parsed_end_id[ix], :skip => false}
+          end
         else
-          @id_range << {:hi => @parsed_start_id[ix], :low => @parsed_end_id[ix]}
+          @id_range << {:skip => true}
         end
       end
     end
@@ -36,6 +40,7 @@ class ResourceUpdateMonitor
     res_id = JSON.parse(resource[:identifier])
 
     res_id.each_index do |ix|
+      next if @id_range[ix][:skip]
       return false if res_id[ix] < @id_range[ix][:low] || res_id[ix] > @id_range[ix][:hi]
     end
 
