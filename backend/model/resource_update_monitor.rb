@@ -15,6 +15,31 @@ class ResourceUpdateMonitor
   def identifier(start_id, end_id = nil)
     @start_id = start_id
     @end_id = end_id
+    @parsed_start_id = JSON.parse(@start_id)
+    @id_range = []
+    if @end_id
+      @parsed_end_id = JSON.parse(@end_id)
+      @parsed_start_id.each_index do |ix|
+        if @parsed_start_id[ix] < @parsed_end_id[ix]
+          @id_range << {:low => @parsed_start_id[ix], :hi => @parsed_end_id[ix]}
+        else
+          @id_range << {:hi => @parsed_start_id[ix], :low => @parsed_end_id[ix]}
+        end
+      end
+    end
+  end
+
+
+  def in_range(resource)
+    return true unless @start_id && @end_id
+
+    res_id = JSON.parse(resource[:identifier])
+
+    res_id.each_index do |ix|
+      return false if res_id[ix] < @id_range[ix][:low] || res_id[ix] > @id_range[ix][:hi]
+    end
+
+    return true
   end
 
 
@@ -29,17 +54,19 @@ class ResourceUpdateMonitor
         mods = mods.where(:repo_id => @repo_id)
       end
 
-      if @start_id
+      if @start_id && !@end_id
         mods = mods.where(:identifier => @start_id)
       end
 
       mods = mods.select(:id, :identifier, :publish, :suppressed)
 
       mods.each do |res|
-        if res[:publish] == 1 && res[:suppressed] == 0
-          adds << {'id' => res[:id], 'identifier' => JSON.parse(res[:identifier])}
-        else
-          removes << res[:id]
+        if in_range(res)
+          if res[:publish] == 1 && res[:suppressed] == 0
+            adds << {'id' => res[:id], 'identifier' => JSON.parse(res[:identifier])}
+          else
+            removes << res[:id]
+          end
         end
       end
 
