@@ -51,7 +51,7 @@ class ResourceUpdateMonitor
   def updates_since(timestamp)
     adds = []
     removes = []
-    mtime = Time.at(timestamp.to_i)
+    mtime = Time.at(timestamp)
     DB.open do |db|
       mods = db[:resource].where(Sequel.qualify(:resource, :system_mtime) > mtime)
 

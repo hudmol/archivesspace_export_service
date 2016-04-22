@@ -2,7 +2,7 @@ class ArchivesSpaceService < Sinatra::Base
 
   Endpoint.get('/resource-update-feed')
     .description("Get a list of IDs for Resources changed since a timestamp")
-    .params(["timestamp", String, "Timestamp of last update"],
+    .params(["timestamp", Integer, "Timestamp of last update"],
             ["repo_id", Integer, "Repository ID", :optional => true],
             ["start_id", String, "Four-part identifier as a JSON array specifying the start of a range", :optional => true],
             ["end_id", String, "Four-part identifier as a JSON array specifying the end of a range", :optional => true],
