@@ -41,6 +41,7 @@ class ResourceUpdateMonitor
 
     res_id.each_index do |ix|
       next if @id_range[ix][:skip]
+      return false unless res_id[ix]
       return false if res_id[ix] < @id_range[ix][:low] || res_id[ix] > @id_range[ix][:hi]
     end
 
