@@ -13,6 +13,9 @@ class ExportEADTask
 
     @db_dir = File.join(@workspace_directory, "db")
     @work_queue = SQLiteWorkQueue.new(File.join(@db_dir, "ead_export.sqlite"))
+
+    @feed = nil
+    @export_options = task_params.fetch(:export_options)
   end
 
   def call(process)
@@ -21,15 +24,15 @@ class ExportEADTask
     now = Time.now
     last_read_time = @work_queue.get_int_status("last_read_time") { 0 }
 
-    feed = ResourceUpdateFeed.new(config[:aspace_backend_url], config[:aspace_username], config[:aspace_password])
+    @feed = ResourceUpdateFeed.new(config[:aspace_backend_url], config[:aspace_username], config[:aspace_password])
 
-    updates = feed.updates_since(last_read_time)
+    updates = @feed.updates_since(last_read_time)
 
     load_into_work_queue(updates)
 
     while item = @work_queue.next
       if item[:action] == 'add'
-        download_ead(item[:resource_id], item[:repo_id], feed)
+        download_ead(item[:resource_id], item[:repo_id])
       elsif item[:action] == 'remove'
         remove_ead(item[:resource_id])
       else
@@ -79,9 +82,9 @@ class ExportEADTask
     File.join(ead_export_directory, "#{id}.xml")
   end
 
-  def download_ead(id, repo_id, feed)
+  def download_ead(id, repo_id)
     File.open(File.join(ead_export_file(id)), 'w') do |io|
-      io.write(feed.export(id, repo_id))
+      io.write(@feed.export(id, repo_id, @export_options))
     end
   end
 

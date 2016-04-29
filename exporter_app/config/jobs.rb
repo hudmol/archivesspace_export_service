@@ -16,7 +16,12 @@
 
                    :task => ExportEADTask,
                    :task_parameters => {
-                     :workspace_directory => ExporterApp.base_dir('workspace/001')
+                     :workspace_directory => ExporterApp.base_dir('workspace/001'),
+                     :export_options => {
+                       :include_unpublished => false,
+                       :include_daos => false,
+                       :numbered_cs => false
+                     }
                      # :pipeline => [
                      #   Pipeline::ValidateXML.new("schema.xsd"),
                      #   Pipeline::XSLTransformXML.new("my.xsl"),
