@@ -71,7 +71,7 @@ class ExportEADTask
 
   def ead_export_directory
     exp_dir = File.join(@workspace_directory, EXPORTED_DIR)
-    Dir.mkdir(exp_dir) unless Dir.exist?(exp_dir)
+    FileUtils.mkdir_p(exp_dir)
     exp_dir
   end
 
@@ -80,8 +80,8 @@ class ExportEADTask
   end
 
   def download_ead(id, repo_id, feed)
-    open File.join(ead_export_file(id)), 'w' do |io|
-      io.write feed.export(id, repo_id)
+    File.open(File.join(ead_export_file(id)), 'w') do |io|
+      io.write(feed.export(id, repo_id))
     end
   end
 
