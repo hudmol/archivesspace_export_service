@@ -5,6 +5,8 @@ require_relative 'lib/resource_update_feed'
 
 class ExportEADTask
 
+  EXPORTED_DIR = 'exported'
+
   def initialize(task_params)
     @workspace_directory = File.absolute_path(task_params.fetch(:workspace_directory))
     # @pipeline = task_params.fetch(:pipeline)
@@ -25,7 +27,16 @@ class ExportEADTask
 
     load_into_work_queue(updates)
 
-    # Do some work...
+    while item = @work_queue.next
+      if item[:action] == 'add'
+        download_ead(item[:resource_id], item[:repo_id], feed)
+      elsif item[:action] == 'remove'
+        remove_ead(item[:resource_id])
+      else
+        puts "Unknown action for item: #{item.inspect}"
+      end
+      @work_queue.done(item)
+    end
 
     @work_queue.put_int_status("last_read_time", now.to_i)
   end
@@ -35,7 +46,8 @@ class ExportEADTask
   def load_into_work_queue(updates)
     updates['adds'].each do |add|
       @work_queue.push('add', add['id'], {
-                         'identifier' => add['identifier'].to_json
+                         'identifier' => add['identifier'].to_json,
+                         'repo_id' => add['repo_id'],
                        })
     end
 
@@ -46,6 +58,10 @@ class ExportEADTask
     #
     # -- Mark (Wednesday 20 April  15:38:14 AEST 2016)
     #
+    # Still don't seem to need it ...
+    #
+    # -- James (Fri Apr 29 14:31:38 AEST 2016)
+    #
     updates['removes'].each do |remove_id|
       @work_queue.push('remove', remove_id)
     end
@@ -53,4 +69,25 @@ class ExportEADTask
     @work_queue.optimize
   end
 
+  def ead_export_directory
+    exp_dir = File.join(@workspace_directory, EXPORTED_DIR)
+    Dir.mkdir(exp_dir) unless Dir.exist?(exp_dir)
+    exp_dir
+  end
+
+  def ead_export_file(id)
+    File.join(ead_export_directory, "#{id}.xml")
+  end
+
+  def download_ead(id, repo_id, feed)
+    open File.join(ead_export_file(id)), 'w' do |io|
+      io.write feed.export(id, repo_id)
+    end
+  end
+
+  def remove_ead(id)
+    File.delete(ead_export_file(id))
+  rescue Errno::ENOENT
+    # so it's not there, that's cool
+  end
 end

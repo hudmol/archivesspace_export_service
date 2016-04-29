@@ -21,6 +21,32 @@ class SQLiteWorkQueue
     end
   end
 
+  def next
+    with_connection do |conn|
+      prepare(conn,
+              "select id, resource_id, action, identifier, repo_id from work_queue order by id limit 1") do |statement|
+        rs = statement.execute_query
+        while rs.next
+          return {
+            :id => rs.get_int(1),
+            :resource_id => rs.get_int(2),
+            :action => rs.get_string(3),
+            :identifier => rs.get_string(4),
+            :repo_id => rs.get_int(5),
+          }
+        end
+      end
+    end
+  end
+
+  def done(item)
+    with_connection do |conn|
+      prepare(conn, "delete from work_queue where id = ?", [item[:id]]) do |statement|
+        statement.execute_update
+      end
+    end    
+  end
+
   def list
     result = []
 
@@ -129,7 +155,8 @@ class SQLiteWorkQueue
     with_connection do |conn|
       statement = conn.create_statement
       statement.execute_update("create table if not exists work_queue" +
-                               " (id integer primary key autoincrement, action text, resource_id integer, identifier text)")
+                               " (id integer primary key autoincrement," +
+                               " action text, resource_id integer, identifier text, repo_id integer)")
 
       statement.execute_update("create table if not exists status" +
                                " (key primary key, int_value integer)")
