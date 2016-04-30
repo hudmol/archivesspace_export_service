@@ -81,7 +81,7 @@ class ExportEADTask
   end
 
   def download_ead(id, repo_id)
-    File.open(File.join(ead_export_file(id)), 'w') do |io|
+    File.open(ead_export_file(id), 'w') do |io|
       io.write(@as_client.export(id, repo_id, @export_options))
     end
   end
