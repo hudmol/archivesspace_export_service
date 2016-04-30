@@ -1,14 +1,14 @@
 require 'net/http'
 require 'json'
 
-class ResourceUpdateFeed
+class ArchivesSpaceClient
 
   def initialize(aspace_backend_url, username, password)
     @aspace_backend_url = aspace_backend_url
     @username = username
     @password = password
 
-    @session = login
+    @session
   end
 
   def updates_since(epoch_time)
@@ -36,6 +36,8 @@ class ResourceUpdateFeed
   end
 
   def get(uri, params)
+    @session = login unless @session
+
     uri = URI.join(@aspace_backend_url, uri)
     uri.query = URI.encode_www_form(params)
 

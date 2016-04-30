@@ -1,7 +1,7 @@
 require 'fileutils'
 require 'json'
 require_relative 'lib/sqlite_work_queue'
-require_relative 'lib/resource_update_feed'
+require_relative 'lib/archivesspace_client'
 
 class ExportEADTask
 
@@ -14,19 +14,17 @@ class ExportEADTask
     @db_dir = File.join(@workspace_directory, "db")
     @work_queue = SQLiteWorkQueue.new(File.join(@db_dir, "ead_export.sqlite"))
 
-    @feed = nil
+    config = ExporterApp.config
+    @as_client = ArchivesSpaceClient.new(config[:aspace_backend_url], config[:aspace_username], config[:aspace_password])
+
     @export_options = task_params.fetch(:export_options)
   end
 
   def call(process)
-    config = ExporterApp.config
-
     now = Time.now
     last_read_time = @work_queue.get_int_status("last_read_time") { 0 }
 
-    @feed = ResourceUpdateFeed.new(config[:aspace_backend_url], config[:aspace_username], config[:aspace_password])
-
-    updates = @feed.updates_since(last_read_time)
+    updates = @as_client.updates_since(last_read_time)
 
     load_into_work_queue(updates)
 
@@ -84,7 +82,7 @@ class ExportEADTask
 
   def download_ead(id, repo_id)
     File.open(File.join(ead_export_file(id)), 'w') do |io|
-      io.write(@feed.export(id, repo_id, @export_options))
+      io.write(@as_client.export(id, repo_id, @export_options))
     end
   end
 
