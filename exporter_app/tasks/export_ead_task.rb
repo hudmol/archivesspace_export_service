@@ -71,9 +71,7 @@ class ExportEADTask
   end
 
   def ead_export_directory
-    exp_dir = File.join(@workspace_directory, EXPORTED_DIR)
-    FileUtils.mkdir_p(exp_dir)
-    exp_dir
+    FileUtils.mkdir_p(File.join(@workspace_directory, EXPORTED_DIR))
   end
 
   def ead_export_file(id)
