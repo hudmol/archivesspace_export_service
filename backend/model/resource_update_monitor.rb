@@ -64,12 +64,16 @@ class ResourceUpdateMonitor
         mods = mods.where(:identifier => @start_id)
       end
 
-      mods = mods.select(:id, :identifier, :publish, :suppressed)
+      mods = mods.select(:id, :identifier, :repo_id, :publish, :suppressed)
 
       mods.each do |res|
         if in_range(res)
           if res[:publish] == 1 && res[:suppressed] == 0
-            adds << {'id' => res[:id], 'identifier' => JSON.parse(res[:identifier])}
+            adds << {
+              'id' => res[:id],
+              'identifier' => JSON.parse(res[:identifier]),
+              'repo_id' => res[:repo_id]
+            }
           else
             removes << res[:id]
           end
