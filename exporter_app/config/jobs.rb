@@ -11,7 +11,7 @@
     WeekdayJob.new(:job_identifier => '001',
                    :job_name => 'Every morning',
                    :days_of_week => ['Mon', 'Tue', 'Wed', 'Fri'],
-                   :start_time => '12:00',
+                   :start_time => '10:00',
                    :end_time => '6:00',
 
                    :task => ExportEADTask,
