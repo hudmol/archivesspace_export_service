@@ -1,3 +1,5 @@
+require_relative 'hook_interface'
+
 class ShellRunner < HookInterface
 
   def initialize(script)
