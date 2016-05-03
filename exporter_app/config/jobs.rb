@@ -49,6 +49,12 @@
 
                    :task => ExportEADTask,
                    :task_parameters => {
+                     :search_options => {
+#                       :repo_id => 2,
+#                       :identifier => 'AAA.02.G',
+#                       :start_id => 'AAA.01',
+#                       :end_id => 'ZZZ.99',
+                     },
                      :export_options => {
                        :include_unpublished => false,
                        :include_daos => false,
