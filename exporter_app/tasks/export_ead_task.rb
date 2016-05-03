@@ -67,6 +67,10 @@ class ExportEADTask
     #
     # -- James (Fri Apr 29 14:31:38 AEST 2016)
     #
+    # I hate it when James is right :(
+    #
+    # -- Mark (Tuesday 3 May  10:26:28 AEST 2016)
+    #
     updates['removes'].each do |remove_id|
       @work_queue.push('remove', remove_id)
     end
