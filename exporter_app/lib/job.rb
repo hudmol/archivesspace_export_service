@@ -5,8 +5,9 @@ class Job
   attr_reader :name, :id, :before_hooks, :after_hooks
 
   def initialize(params)
-    @id = params.fetch(:job_identifier)
-    @name = params.fetch(:job_name)
+    @id = params.fetch(:identifier)
+
+    @workspace_base = ExporterApp.workspace_for_job(@id)
 
     @before_hooks = params.fetch(:before_hooks, [])
     @after_hooks = params.fetch(:after_hooks, [])
@@ -16,7 +17,7 @@ class Job
   end
 
   def task
-    @task.new(@task_params)
+    @task.new(@task_params, @id, @workspace_base)
   end
 
   def within_window?(time)

@@ -20,18 +20,18 @@ class JobStateStorage
   end
 
   def job_started(job)
-    @store[job] = JobState.new(Time.now, nil, 'running')
+    @store[job.id] = JobState.new(Time.now, nil, 'running')
   end
 
   def job_completed(job, status)
-    job_info = @store.fetch(job)
+    job_info = @store.fetch(job.id)
 
     job_info.last_finish_time = Time.now
     job_info.status = status
   end
 
   def last_run_of(job)
-    @store.fetch(job, null_job_info)
+    @store.fetch(job.id, null_job_info)
   end
 
   private

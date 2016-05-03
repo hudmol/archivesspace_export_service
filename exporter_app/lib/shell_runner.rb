@@ -4,10 +4,10 @@ class ShellRunner < HookInterface
     @script = script
   end
 
-  def call(task)
+  def call(task, *args)
     environment = Hash[task.exported_variables.map {|k, v| [k.to_s.upcase, v.to_s]}]
 
-    ret = system(environment, expand_path(@script))
+    ret = system(environment, expand_path(@script), *args)
 
     if ret
       # All OK

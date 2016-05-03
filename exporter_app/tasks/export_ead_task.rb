@@ -10,9 +10,10 @@ class ExportEADTask < TaskInterface
 
   EXPORTED_DIR = 'exported'
 
-  def initialize(task_params)
-    @workspace_directory = File.absolute_path(task_params.fetch(:workspace_directory))
-    # @pipeline = task_params.fetch(:pipeline)
+  def initialize(task_params, job_identifier, workspace_base)
+    @workspace_directory = workspace_base
+    @export_directory = File.join(workspace_base, EXPORTED_DIR)
+    @subdirectory = job_identifier
 
     @db_dir = File.join(@workspace_directory, "db")
     @work_queue = SQLiteWorkQueue.new(File.join(@db_dir, "ead_export.sqlite"))
@@ -35,6 +36,7 @@ class ExportEADTask < TaskInterface
 
     load_into_work_queue(updates)
 
+    # FIXME: Need to stop if `process` tells us we're outside the window
     while item = @work_queue.next
       if item[:action] == 'add'
         begin
@@ -63,7 +65,7 @@ class ExportEADTask < TaskInterface
   def exported_variables
     {
       :workspace_directory => @workspace_directory,
-      :export_directory => File.join(@workspace_directory, EXPORTED_DIR)
+      :export_directory => @export_directory
     }
   end
 
@@ -101,12 +103,11 @@ class ExportEADTask < TaskInterface
     @work_queue.optimize
   end
 
-  def ead_export_directory
-    FileUtils.mkdir_p(File.join(@workspace_directory, EXPORTED_DIR))
-  end
-
   def path_for_export_file(basename, extension = 'xml')
-    File.join(ead_export_directory, "#{basename}.#{extension}")
+    output_directory = File.join(@export_directory, @subdirectory)
+    FileUtils.mkdir_p(output_directory)
+
+    File.join(output_directory, "#{basename}.#{extension}")
   end
 
   def download_ead(item)

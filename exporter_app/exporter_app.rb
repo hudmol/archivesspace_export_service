@@ -63,6 +63,11 @@ class ExporterApp
     end
   end
 
+
+  def self.workspace_for_job(job_id)
+    File.absolute_path(base_dir("workspace/#{job_id}"))
+  end
+
 end
 
 
