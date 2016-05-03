@@ -111,4 +111,4 @@ Jobs are configured in the `jobs.rb` file at:
 
 See the `jobs.rb` file that ships with the release for job configuration examples.
 
-A full explanation if job definitions is not possible at this time as the application is still under development.
+A full explanation of job definitions is not possible at this time as the application is still under development.
