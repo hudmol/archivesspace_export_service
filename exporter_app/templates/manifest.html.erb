@@ -1,0 +1,14 @@
+<html>
+<body>
+  <h1>Manifest</h1>
+
+  <ul>
+      <% @data.each do |file_data| %>
+        <li>
+          <%= file_data['title'] %> [<%= file_data['uri'] %>]
+        </li>
+      <% end %>
+  </ul>
+
+</body>
+</html>

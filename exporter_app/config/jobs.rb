@@ -31,6 +31,7 @@
                    ],
 
                    :after_hooks => [
+                     ErbRenderer.new("templates/manifest.html.erb", "manifest.html"),
                      ShellRunner.new("scripts/commit_workspace.sh"),
                    ],
 
