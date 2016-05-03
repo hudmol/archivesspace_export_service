@@ -110,3 +110,5 @@ Jobs are configured in the `jobs.rb` file at:
     /path/to/archivesspace_export_service/exporter_app/config/jobs.rb
 
 See the `jobs.rb` file that ships with the release for job configuration examples.
+
+A full explanation if job definitions is not possible at this time as the application is still under development.
