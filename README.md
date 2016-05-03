@@ -7,6 +7,7 @@ access to the ArchivesSpace backend.
 
 The ArchivesSpace Export Service was developed by Hudson Molonglo for Yale University.
 
+
 ## Installation
 
 This git repository contains both the ArchivesSpace plug-in and the Export Service Application.
@@ -55,4 +56,26 @@ And shut it down like this:
     $ bin/shutdown.sh
 
 See below for configuration options.
+
+
+## Configuration
+
+The configuration for the Exporter Application is set in:
+
+    /path/to/archivesspace_export_service/exporter_app/config/config.rb
+
+Edit this file to set the url, username and password to access the ArcihvesSpace API, like this:
+
+    {
+      aspace_username: 'a_user',
+      aspace_password: 'secret_password',
+      aspace_backend_url: 'http://localhost:8089/'
+    }
+
+Note that the user will need `view_repository` permission on any ArchivesSpace repository from
+which resources will be exported.
+
+Also note that the url is to the ArchivesSpace backend, not the frontend web UI. If the Exporter
+Application is deployed on a different machine from ArchivesSpace you may need to configure your
+firewall to open the backend port.
 
