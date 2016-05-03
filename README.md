@@ -104,3 +104,9 @@ For each resource in the `removes` list it simply removes the exported file (if 
 and unpublishes it.
 
 ## Job Configuration
+
+Jobs are configured in the `jobs.rb` file at:
+
+    /path/to/archivesspace_export_service/exporter_app/config/jobs.rb
+
+See the `jobs.rb` file that ships with the release for job configuration examples.
