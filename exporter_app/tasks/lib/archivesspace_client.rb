@@ -11,8 +11,8 @@ class ArchivesSpaceClient
     @session
   end
 
-  def updates_since(epoch_time)
-    json_get('/resource-update-feed', :timestamp => epoch_time)
+  def updates_since(epoch_time, opts = {})
+    json_get('/resource-update-feed', opts.merge(:timestamp => epoch_time))
   end
 
   def export(id, repo_id, opts = {})
