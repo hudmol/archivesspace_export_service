@@ -1,6 +1,7 @@
 require 'fileutils'
 require 'json'
 require_relative 'task_interface'
+require_relative 'lib/xsd_validator'
 require_relative 'lib/sqlite_work_queue'
 require_relative 'lib/archivesspace_client'
 
@@ -18,6 +19,8 @@ class ExportEADTask < TaskInterface
     config = ExporterApp.config
     @as_client = ArchivesSpaceClient.new(config[:aspace_backend_url], config[:aspace_username], config[:aspace_password])
 
+    @archivesspace_ead_schema = task_params.fetch(:archivesspace_ead_schema, nil)
+
     @export_options = task_params.fetch(:export_options)
   end
 
@@ -31,13 +34,23 @@ class ExportEADTask < TaskInterface
 
     while item = @work_queue.next
       if item[:action] == 'add'
-        download_ead(item[:resource_id], item[:repo_id])
-        create_manifest_json(item)
+        begin
+          download_ead(item)
+          create_manifest_json(item)
+        rescue XSDValidator::ValidationFailedException => e
+          puts "EAD validation failed for record #{item[:identifier]} with the following error:\n"
+          puts e
+
+          # THINKME: At the moment we just log this warning and skip over the
+          # record, never to be exported again until next changed in
+          # ArchivesSpace.
+        end
       elsif item[:action] == 'remove'
         remove_ead_and_manifest(item[:resource_id])
       else
         puts "Unknown action for item: #{item.inspect}"
       end
+
       @work_queue.done(item)
     end
 
@@ -93,14 +106,25 @@ class ExportEADTask < TaskInterface
     File.join(ead_export_directory, "#{basename}.#{extension}")
   end
 
-  def download_ead(id, repo_id)
-    outfile = path_for_export_file(id, 'xml')
+  def download_ead(item)
+    id = item.fetch(:resource_id)
+    repo_id = item.fetch(:repo_id)
 
-    File.open("#{outfile}.tmp", 'w') do |io|
+    outfile = path_for_export_file(id, 'xml')
+    tempfile = "#{outfile}.tmp"
+
+    File.open(tempfile, 'w') do |io|
       io.write(@as_client.export(id, repo_id, @export_options))
     end
 
-    File.rename("#{outfile}.tmp", outfile)
+    begin
+      validate_ead!(item[:identifier], tempfile)
+    rescue
+      File.delete(tempfile)
+      raise $!
+    end
+
+    File.rename(tempfile, outfile)
   end
 
   def create_manifest_json(item)
@@ -125,6 +149,12 @@ class ExportEADTask < TaskInterface
         # so it's not there, that's cool
       end
     end
+  end
+
+  def validate_ead!(identifier, file)
+    return unless @archivesspace_ead_schema
+
+    XSDValidator.new(@archivesspace_ead_schema).validate(identifier, file)
   end
 
 end
