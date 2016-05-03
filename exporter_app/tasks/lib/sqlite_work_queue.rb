@@ -33,8 +33,8 @@ class SQLiteWorkQueue
             :action => rs.get_string(3),
             :identifier => rs.get_string(4),
             :repo_id => rs.get_int(5),
-            :title => rs.get_string(5),
-            :uri => rs.get_string(5),
+            :title => rs.get_string(6),
+            :uri => rs.get_string(7),
           }
         end
       end
