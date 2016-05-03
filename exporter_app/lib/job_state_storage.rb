@@ -1,3 +1,4 @@
+# FIXME: switch to sqlite?
 class JobStateStorage
 
   class JobState < Struct.new(:last_start_time, :last_finish_time, :status)
