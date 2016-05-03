@@ -2,6 +2,7 @@ require 'fileutils'
 require 'json'
 require_relative 'task_interface'
 require_relative 'lib/xsd_validator'
+require_relative 'lib/xslt_processor'
 require_relative 'lib/sqlite_work_queue'
 require_relative 'lib/archivesspace_client'
 
@@ -19,7 +20,8 @@ class ExportEADTask < TaskInterface
     config = ExporterApp.config
     @as_client = ArchivesSpaceClient.new(config[:aspace_backend_url], config[:aspace_username], config[:aspace_password])
 
-    @archivesspace_ead_schema = task_params.fetch(:archivesspace_ead_schema, nil)
+    @archivesspace_ead_schema_validations = task_params.fetch(:archivesspace_ead_schema_validations, [])
+    @xslt_transforms = task_params.fetch(:xslt_transforms, [])
 
     @export_options = task_params.fetch(:export_options)
   end
@@ -114,11 +116,23 @@ class ExportEADTask < TaskInterface
     tempfile = "#{outfile}.tmp"
 
     File.open(tempfile, 'w') do |io|
-      io.write(@as_client.export(id, repo_id, @export_options))
+      ead = @as_client.export(id, repo_id, @export_options)
+
+      # FIXME: This gets hornstein.xml parsing, but should be removed in the final version
+      ead = ead.gsub(/<extref ns2:href.*<\/extref>/mi, '')
+
+      io.write(ead)
     end
 
     begin
       validate_ead!(item[:identifier], tempfile)
+    rescue
+      File.delete(tempfile)
+      raise $!
+    end
+
+    begin
+      run_xslt_transforms(item[:identifier], tempfile)
     rescue
       File.delete(tempfile)
       raise $!
@@ -151,10 +165,17 @@ class ExportEADTask < TaskInterface
     end
   end
 
-  def validate_ead!(identifier, file)
-    return unless @archivesspace_ead_schema
+  def validate_ead!(identifier, file_to_validate)
+    @archivesspace_ead_schema_validations.each do |schema_file|
+      XSDValidator.new(schema_file).validate(identifier, file_to_validate)
+    end
+  end
 
-    XSDValidator.new(@archivesspace_ead_schema).validate(identifier, file)
+  def run_xslt_transforms(identifier, tempfile)
+    @xslt_transforms.each do |xslt|
+      # in-place transform
+      XSLTProcessor.new(xslt).transform(identifier, tempfile, tempfile)
+    end
   end
 
 end

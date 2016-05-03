@@ -1,22 +1,8 @@
+require_relative 'xml_exception'
+
 class XSDValidator
 
-  class ValidationFailedException < StandardError
-    def initialize(msg, cause)
-      msg = (msg +
-             "\n" +
-             ("=" * 72) +
-             "\n" +
-             cause +
-             ("=" * 72) +
-             "\n")
-
-      super(msg)
-      @cause = cause
-    end
-
-    def cause
-      @cause
-    end
+  class ValidationFailedException < XMLException
   end
 
   def initialize(schema_file)
