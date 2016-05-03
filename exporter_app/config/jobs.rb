@@ -10,9 +10,9 @@
   jobs: [
     WeekdayJob.new(:job_identifier => '001',
                    :job_name => 'Every morning',
-                   :days_of_week => ['Mon', 'Tue', 'Wed', 'Fri'],
-                   :start_time => '10:00',
-                   :end_time => '6:00',
+                   :days_of_week => ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+                   :start_time => '00:00',
+                   :end_time => '23:59',
 
                    :task => ExportEADTask,
                    :task_parameters => {
@@ -21,12 +21,18 @@
                        :include_unpublished => false,
                        :include_daos => false,
                        :numbered_cs => false
-                     }
-                     # :pipeline => [
-                     #   Pipeline::ValidateXML.new("schema.xsd"),
-                     #   Pipeline::XSLTransformXML.new("my.xsl"),
-                     # ]
-                   }
+                     },
+                     :archivesspace_ead_schema => 'config/ead.xsd',
+                     :xslt_transforms => ['config/transform.xslt'],
+                   },
+
+                   :before_hooks => [
+                     ShellRunner.new("scripts/prepare_workspace.sh"),
+                   ],
+
+                   :after_hooks => [
+                     ShellRunner.new("scripts/commit_workspace.sh"),
+                   ],
 
                    # :task => SleepTask,
                    # :task_parameters => {}

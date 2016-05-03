@@ -1,9 +1,10 @@
 require 'fileutils'
 require 'json'
+require_relative 'task_interface'
 require_relative 'lib/sqlite_work_queue'
 require_relative 'lib/archivesspace_client'
 
-class ExportEADTask
+class ExportEADTask < TaskInterface
 
   EXPORTED_DIR = 'exported'
 
@@ -33,8 +34,7 @@ class ExportEADTask
         download_ead(item[:resource_id], item[:repo_id])
         create_manifest_json(item)
       elsif item[:action] == 'remove'
-        remove_ead(item[:resource_id])
-        remove_manifest_json(item[:id])
+        remove_ead_and_manifest(item[:resource_id])
       else
         puts "Unknown action for item: #{item.inspect}"
       end
@@ -42,6 +42,13 @@ class ExportEADTask
     end
 
     @work_queue.put_int_status("last_read_time", now.to_i)
+  end
+
+  def exported_variables
+    {
+      :workspace_directory => @workspace_directory,
+      :export_directory => File.join(@workspace_directory, EXPORTED_DIR)
+    }
   end
 
   private
@@ -67,6 +74,10 @@ class ExportEADTask
     #
     # -- James (Fri Apr 29 14:31:38 AEST 2016)
     #
+    # I hate it when James is right :(
+    #
+    # -- Mark (Tuesday 3 May  10:26:28 AEST 2016)
+    #
     updates['removes'].each do |remove_id|
       @work_queue.push('remove', remove_id)
     end
@@ -78,39 +89,42 @@ class ExportEADTask
     FileUtils.mkdir_p(File.join(@workspace_directory, EXPORTED_DIR))
   end
 
-  def ead_export_file(id)
-    File.join(ead_export_directory, "#{id}.xml")
+  def path_for_export_file(basename, extension = 'xml')
+    File.join(ead_export_directory, "#{basename}.#{extension}")
   end
 
   def download_ead(id, repo_id)
-    File.open(ead_export_file(id), 'w') do |io|
+    outfile = path_for_export_file(id, 'xml')
+
+    File.open("#{outfile}.tmp", 'w') do |io|
       io.write(@as_client.export(id, repo_id, @export_options))
     end
-  end
 
-  def remove_ead(id)
-    File.delete(ead_export_file(id))
-  rescue Errno::ENOENT
-    # so it's not there, that's cool
-  end
-
-  def manifest_json_file(id)
-    File.join(ead_export_directory, "#{id}.json")
+    File.rename("#{outfile}.tmp", outfile)
   end
 
   def create_manifest_json(item)
-    File.open(manifest_json_file(item[:id]), 'w') do |io|
+    outfile = path_for_export_file("#{item[:resource_id]}", 'json')
+
+    File.open("#{outfile}.tmp", 'w') do |io|
       io.write({
-        :id => item[:id],
+        :resource_db_id => item[:resource_id],
         :uri => item[:uri],
         :title => item[:title],
       }.to_json)
     end
+
+    File.rename("#{outfile}.tmp", outfile)
   end
 
-  def remove_manifest_json(id)
-    File.delete(manifest_json_file(id))
-  rescue Errno::ENOENT
-    # so it's not there, that's cool
+  def remove_ead_and_manifest(id)
+    [path_for_export_file(id, 'xml'), path_for_export_file("#{id}", 'json')].each do |file|
+      begin
+        File.delete(file)
+      rescue Errno::NOENT
+        # so it's not there, that's cool
+      end
+    end
   end
+
 end

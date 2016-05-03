@@ -106,11 +106,20 @@ class SQLiteWorkQueue
         statement.execute_update
       end
 
-      # If there are two 'add' entries for the same resouce ID, just keep the
-      # first one.
+      # If there are two 'add' entries for the same resource ID, just keep the
+      # last one.
+      #
+      # Note: previously we just kept the first one, but there's additional
+      # metadata that we get from the plugin (such as the resource 4-part
+      # identifier) that we want to be as up-to-date as possible.  If delete all
+      # but the first row, we end up writing out EAD with the wrong
+      # identifier/metadata.
+      #
+      # Taking the last identifier does mean the resource won't get exported as
+      # quickly as it otherwise would, but in practice that might not matter.
       prepare(conn, "delete from work_queue " +
                     "where action = 'add' and id not in " +
-                    " (select min(id) from work_queue " +
+                    " (select max(id) from work_queue " +
                     "    where action = 'add' group by resource_id)") do |statement|
         statement.execute_update
       end
@@ -142,13 +151,13 @@ class SQLiteWorkQueue
       elsif argument.is_a?(Integer)
         statement.set_int(i + 1, argument)
       else
-        raise "Unrecognized argument type: #{argument.class}"
+        raise "Unrecognized argument type: #{argument.class} in arguments #{arguments.inspect}"
       end
     end
 
     yield statement
   rescue
-    $stderr.puts("SQL failed: #{sql}")
+    $stderr.puts("SQL failed: #{sql}: #{$!}")
   ensure
     statement.close if statement
   end

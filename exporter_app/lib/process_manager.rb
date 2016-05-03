@@ -19,6 +19,7 @@ class ProcessManager
 
   class Process
 
+    # THINKME: Maybe we don't need the ability to terminate from the outside like this?
     def initialize(job, completed_callback)
       @job = job
       @callback = completed_callback
@@ -28,24 +29,38 @@ class ProcessManager
 
     def call
       @thread = Thread.new do
-        status = 'completed'
-
         begin
-          @job.task.call(self)
-        rescue
-          $stderr.puts($!)
-          $stderr.puts($@.join("\n"))
-          status = 'failed'
-        ensure
-          begin
-            status = terminated? ? 'terminated' : status
+          status = 'completed'
 
-            # THINKME: This callback happens on a different thread
-            @callback.call(@job, status)
+          @job.before_hooks.each do |hook|
+            hook.call(@job.task)
+          end
+
+          begin
+            @job.task.call(self)
+
+            @job.after_hooks.each do |hook|
+              hook.call(@job.task)
+            end
+
           rescue
             $stderr.puts($!)
             $stderr.puts($@.join("\n"))
+            status = 'failed'
+          ensure
+            begin
+              status = terminated? ? 'terminated' : status
+
+              # THINKME: This callback happens on a different thread
+              @callback.call(@job, status)
+            rescue
+              $stderr.puts($!)
+              $stderr.puts($@.join("\n"))
+            end
           end
+        rescue
+          $stderr.puts($!)
+          $stderr.puts($@.join("\n"))
         end
       end
     end
