@@ -8,15 +8,14 @@
 
 {
   jobs: [
-    WeekdayJob.new(:job_identifier => '001',
-                   :job_name => 'Every morning',
+    WeekdayJob.new(:identifier => '001',
+                   :description => 'Every morning',
                    :days_of_week => ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
                    :start_time => '00:00',
                    :end_time => '23:59',
 
                    :task => ExportEADTask,
                    :task_parameters => {
-                     :workspace_directory => ExporterApp.base_dir('workspace/001'),
                      :search_options => {
 #                       :repo_id => 2,
 #                       :identifier => 'AAA.02.G',
@@ -28,7 +27,8 @@
                        :include_daos => false,
                        :numbered_cs => false
                      },
-                     :archivesspace_ead_schema => 'config/ead.xsd',
+
+                     # :archivesspace_ead_schema_validations => ['config/ead.xsd'],
                      :xslt_transforms => ['config/transform.xslt'],
                    },
 
@@ -39,24 +39,53 @@
                    :after_hooks => [
                      ErbRenderer.new("templates/manifest.html.erb", "manifest.html"),
                      ShellRunner.new("scripts/commit_workspace.sh"),
+                   ]),
+
+    WeekdayJob.new(:identifier => '002',
+                   :description => 'Every morning',
+                   :days_of_week => ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+                   :start_time => '00:00',
+                   :end_time => '23:59',
+
+                   :task => ExportEADTask,
+                   :task_parameters => {
+                     :export_options => {
+                       :include_unpublished => false,
+                       :include_daos => false,
+                       :numbered_cs => false
+                     },
+
+                     # :archivesspace_ead_schema_validations => ['config/ead.xsd'],
+                     :xslt_transforms => ['config/transform.xslt'],
+                   },
+
+                   :before_hooks => [
+                     ShellRunner.new("scripts/prepare_workspace.sh"),
                    ],
 
-                   # :task => SleepTask,
-                   # :task_parameters => {}
-                  ),
+                   :after_hooks => [
+                     ShellRunner.new("scripts/commit_workspace.sh"),
+                   ]),
 
-    # WeekdayJob.new(:job_identifier => '002',
-    #                :job_name => 'Friday night',
-    #                :days_of_week => ['Fri'],
-    #                :start_time => '2:00',
-    #                :end_time => '6:00'),
-    # 
-    # IntervalJob.new(:job_identifier => '003',
-    #                 :job_name => 'Important Resource',
+    WeekdayJob.new(:identifier => '003',
+                   :description => 'Combine repositories for the other jobs and push them up daily',
+                   :days_of_week => ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+                   :start_time => '00:00',
+                   :end_time => '23:59',
+
+                   :task => RepositoryMergeTask,
+                   :task_parameters => {
+                     :jobs_to_merge => ['001', '002'],
+                     :git_remote => 'somewhere'
+                   })
+
+
+    # IntervalJob.new(:identifier => '003',
+    #                 :description => 'Important Resource',
     #                 :interval_minutes => 60),
     # 
-    # OneOffJob.new(:job_identifier => '004',
-    #               :job_name => 'Do it!'),
+    # OneOffJob.new(:identifier => '004',
+    #               :description => 'Do it!'),
 
 
   ]
