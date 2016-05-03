@@ -151,13 +151,13 @@ class SQLiteWorkQueue
       elsif argument.is_a?(Integer)
         statement.set_int(i + 1, argument)
       else
-        raise "Unrecognized argument type: #{argument.class}"
+        raise "Unrecognized argument type: #{argument.class} in arguments #{arguments.inspect}"
       end
     end
 
     yield statement
   rescue
-    $stderr.puts("SQL failed: #{sql}")
+    $stderr.puts("SQL failed: #{sql}: #{$!}")
   ensure
     statement.close if statement
   end
