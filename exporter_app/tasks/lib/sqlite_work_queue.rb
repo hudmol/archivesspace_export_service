@@ -24,7 +24,7 @@ class SQLiteWorkQueue
   def next
     with_connection do |conn|
       prepare(conn,
-              "select id, resource_id, action, identifier, repo_id from work_queue order by id limit 1") do |statement|
+              "select id, resource_id, action, identifier, repo_id, title, uri from work_queue order by id limit 1") do |statement|
         rs = statement.execute_query
         while rs.next
           return {
@@ -33,6 +33,8 @@ class SQLiteWorkQueue
             :action => rs.get_string(3),
             :identifier => rs.get_string(4),
             :repo_id => rs.get_int(5),
+            :title => rs.get_string(5),
+            :uri => rs.get_string(5),
           }
         end
       end
@@ -156,7 +158,8 @@ class SQLiteWorkQueue
       statement = conn.create_statement
       statement.execute_update("create table if not exists work_queue" +
                                " (id integer primary key autoincrement," +
-                               " action text, resource_id integer, identifier text, repo_id integer)")
+                               " action text, resource_id integer, identifier text," +
+                               " repo_id integer, title text, uri text)")
 
       statement.execute_update("create table if not exists status" +
                                " (key primary key, int_value integer)")

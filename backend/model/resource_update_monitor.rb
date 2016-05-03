@@ -1,5 +1,7 @@
 class ResourceUpdateMonitor
 
+  include JSONModel
+
   def initialize()
     @repo_id = nil
     @start_id = nil
@@ -64,15 +66,17 @@ class ResourceUpdateMonitor
         mods = mods.where(:identifier => @start_id)
       end
 
-      mods = mods.select(:id, :identifier, :repo_id, :publish, :suppressed)
+      mods = mods.select(:id, :title, :identifier, :repo_id, :publish, :suppressed)
 
       mods.each do |res|
         if in_range(res)
           if res[:publish] == 1 && res[:suppressed] == 0
             adds << {
               'id' => res[:id],
+              'title' => res[:title],
               'identifier' => JSON.parse(res[:identifier]),
-              'repo_id' => res[:repo_id]
+              'repo_id' => res[:repo_id],
+              'uri' => JSONModel(:resource).uri_for(res[:id], :repo_id => res[:repo_id]),
             }
           else
             removes << res[:id]

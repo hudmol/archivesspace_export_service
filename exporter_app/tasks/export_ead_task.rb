@@ -27,6 +27,7 @@ class ExportEADTask
     updates = @as_client.updates_since(last_read_time)
 
     load_into_work_queue(updates)
+    create_manifest
 
     while item = @work_queue.next
       if item[:action] == 'add'
@@ -36,6 +37,9 @@ class ExportEADTask
       else
         puts "Unknown action for item: #{item.inspect}"
       end
+
+      update_manifest(item)
+
       @work_queue.done(item)
     end
 
@@ -47,8 +51,10 @@ class ExportEADTask
   def load_into_work_queue(updates)
     updates['adds'].each do |add|
       @work_queue.push('add', add['id'], {
+                         'title' => add['title'],
                          'identifier' => add['identifier'].to_json,
                          'repo_id' => add['repo_id'],
+                         'uri' => add['uri'],
                        })
     end
 
@@ -88,5 +94,23 @@ class ExportEADTask
     File.delete(ead_export_file(id))
   rescue Errno::ENOENT
     # so it's not there, that's cool
+  end
+
+  def manifest_json_file
+    File.join(ead_export_directory, "manifest.json")
+  end
+
+  def create_manifest
+    File.open(manifest_json_file, 'w') do |io|
+      io.write([].to_json)
+    end
+  end
+
+  def update_manifest(item)
+    ead_file = ead_export_file(item[:id])
+
+    File.open(manifest_json_file, 'w') do |io|
+      # either add or remove item from json
+    end
   end
 end
