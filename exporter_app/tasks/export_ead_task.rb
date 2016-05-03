@@ -23,6 +23,7 @@ class ExportEADTask < TaskInterface
     @archivesspace_ead_schema_validations = task_params.fetch(:archivesspace_ead_schema_validations, [])
     @xslt_transforms = task_params.fetch(:xslt_transforms, [])
 
+    @search_options = task_params.fetch(:search_options)
     @export_options = task_params.fetch(:export_options)
   end
 
@@ -30,7 +31,7 @@ class ExportEADTask < TaskInterface
     now = Time.now
     last_read_time = @work_queue.get_int_status("last_read_time") { 0 }
 
-    updates = @as_client.updates_since(last_read_time)
+    updates = @as_client.updates_since(last_read_time, sanitized_search_options)
 
     load_into_work_queue(updates)
 
@@ -178,4 +179,33 @@ class ExportEADTask < TaskInterface
     end
   end
 
+  def sanitized_search_options
+    out = {}
+
+    if @search_options[:repo_id]
+      out[:repo_id] = @search_options[:repo_id]
+    end
+
+    if @search_options[:identifier]
+      out[:start_id] = jsonize_id(@search_options[:identifier])
+    else
+      if @search_options[:start_id]
+        out[:start_id] = jsonize_id(@search_options[:start_id])
+      end
+      if @search_options[:end_id]
+        out[:end_id] = jsonize_id(@search_options[:end_id])
+      end
+    end
+
+    out
+  end
+
+  def jsonize_id(id)
+    out = Array.new(4)
+    ida = id.split('.')
+    ida.each_index do |ix|
+      out[ix] = ida[ix]
+    end
+    out.take(4).to_json
+  end
 end
