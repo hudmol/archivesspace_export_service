@@ -1,4 +1,4 @@
-class ShellRunner
+class ShellRunner < HookInterface
 
   def initialize(script)
     @script = script
