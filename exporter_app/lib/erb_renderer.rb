@@ -9,13 +9,16 @@ class ErbRenderer < HookInterface
   end
 
   def call(task)
-    export_directory = task.exported_variables.fetch(:export_directory)
-
     renderer = ERB.new(File.read(@template_file))
 
-    data = TemplateData.new(combined_json(export_directory))
+    export_directory = task.exported_variables.fetch(:export_directory)
+    subdirectory = task.exported_variables.fetch(:subdirectory)
 
-    File.open(output_filename(export_directory), 'w') {|file|
+    full_export_path = File.join(export_directory, subdirectory)
+
+    data = TemplateData.new(combined_json(full_export_path))
+
+    File.open(output_file(full_export_path), 'w') {|file|
       file.write(renderer.result(data.get_binding))
     }
   end
@@ -32,17 +35,19 @@ class ErbRenderer < HookInterface
     end
   end
 
-  def combined_json(export_directory)
+  def combined_json(path)
     json = []
 
-    Dir.glob(File.join(export_directory, "*.json")) do |filename|
+    json_files = File.join(path, "*.json")
+
+    Dir.glob(json_files) do |filename|
       json.push(JSON.parse(File.read(filename)))
     end
 
     json.sort{|a, b| a[:resource_db_id] <=> b[:resource_db_id]}
   end
 
-  def output_filename(export_directory)
+  def output_file(export_directory)
     File.join(export_directory, @output_filename)
   end
 end

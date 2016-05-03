@@ -74,6 +74,7 @@ class ResourceUpdateMonitor
             adds << {
               'id' => res[:id],
               'title' => res[:title],
+              'ead_id' => res[:ead_id],
               'identifier' => JSON.parse(res[:identifier]),
               'repo_id' => res[:repo_id],
               'uri' => JSONModel(:resource).uri_for(res[:id], :repo_id => res[:repo_id]),
