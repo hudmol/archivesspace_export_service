@@ -81,7 +81,7 @@ if [ -e "$REPO_SNAPSHOT_FILE" ]; then
 fi
 
 # Produce our snapshot file to allow for rollback if anything goes wrong
-git for-each-ref --format='%(refname) %(objectname)' 'refs/heads/_*' 'refs/heads/master' | dd if=/dev/stdin of="$REPO_SNAPSHOT_FILE" conv=fsync status=none
+git for-each-ref --format='%(refname) %(objectname)' 'refs/heads/_*' 'refs/heads/master' > "$REPO_SNAPSHOT_FILE"
 
 # For each repository we're merging into this one, figure out which
 # commits we need and then apply them.
