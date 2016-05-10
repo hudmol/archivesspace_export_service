@@ -65,7 +65,8 @@ class ExportEADTask < TaskInterface
   def exported_variables
     {
       :workspace_directory => @workspace_directory,
-      :export_directory => @export_directory
+      :export_directory => @export_directory,
+      :subdirectory => @subdirectory,
     }
   end
 
@@ -144,13 +145,16 @@ class ExportEADTask < TaskInterface
   end
 
   def create_manifest_json(item)
-    outfile = path_for_export_file("#{item[:resource_id]}", 'json')
+    outfile = path_for_export_file(item[:resource_id], 'json')
 
     File.open("#{outfile}.tmp", 'w') do |io|
       io.write({
         :resource_db_id => item[:resource_id],
+        :ead_id => item[:ead_id],
+        :identifier => JSON.parse(item[:identifier]).compact.join("."),
         :uri => item[:uri],
         :title => item[:title],
+        :ead_file => File.basename(path_for_export_file(item[:resource_id], 'xml')),
       }.to_json)
     end
 

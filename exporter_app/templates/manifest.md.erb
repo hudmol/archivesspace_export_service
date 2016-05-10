@@ -1,0 +1,6 @@
+# Manifest
+
+EAD | EAD ID | Identifier | Title
+--- | ------ | ---------- | -----
+<% @data.each do |json| %>[<%= json['ead_file'] %>](./<%= json['ead_file'] %>) | <%= json['ead_id'] %> | <%= json['identifier'] %> | <%= json['title'] %>
+<% end %>
