@@ -11,7 +11,7 @@ class ExporterApp
       end
     end
 
-    job_definitions = JobDefinitions.parse_config(base_dir("config/jobs.rb"))
+    job_definitions = JobDefinitions.from_config(base_dir("config/jobs.rb"))
 
     # SQLite?
     job_state_storage = JobStateStorage.new
