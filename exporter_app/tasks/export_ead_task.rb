@@ -36,8 +36,7 @@ class ExportEADTask < TaskInterface
 
     load_into_work_queue(updates)
 
-    # FIXME: Need to stop if `process` tells us we're outside the window
-    while item = @work_queue.next
+    while (still_running = process.running?) && (item = @work_queue.next)
       if item[:action] == 'add'
         begin
           download_ead(item)
@@ -57,6 +56,12 @@ class ExportEADTask < TaskInterface
       end
 
       @work_queue.done(item)
+    end
+
+    if !still_running
+      puts "Task finished when end of window was reached"
+    elsif !item
+      puts "Work queue completed!"
     end
 
     @work_queue.put_int_status("last_read_time", now.to_i)
