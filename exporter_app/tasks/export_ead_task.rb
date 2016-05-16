@@ -128,14 +128,14 @@ class ExportEADTask < TaskInterface
     end
 
     begin
-      validate_ead!(item[:identifier], tempfile)
+      run_xslt_transforms(item[:identifier], tempfile)
     rescue
       File.delete(tempfile)
       raise $!
     end
 
     begin
-      run_xslt_transforms(item[:identifier], tempfile)
+      validate_ead!(item[:identifier], tempfile)
     rescue
       File.delete(tempfile)
       raise $!
