@@ -1,6 +1,7 @@
 require 'fileutils'
 require 'json'
 require_relative 'task_interface'
+require_relative 'lib/xml_cleaner'
 require_relative 'lib/xsd_validator'
 require_relative 'lib/xslt_processor'
 require_relative 'lib/sqlite_work_queue'
@@ -126,11 +127,12 @@ class ExportEADTask < TaskInterface
     File.open(tempfile, 'w') do |io|
       ead = @as_client.export(id, repo_id, @export_options)
 
-      # FIXME: This gets hornstein.xml parsing, but should be removed in the final version
-      ead = ead.gsub(/<extref ns2:href.*<\/extref>/mi, '')
-
       io.write(ead)
     end
+
+    # Make sure we don't have any stray namespaces that will trip up the
+    # subsequent validations/transformations.
+    XMLCleaner.new.clean(tempfile)
 
     begin
       run_xslt_transforms(item[:identifier], tempfile)
