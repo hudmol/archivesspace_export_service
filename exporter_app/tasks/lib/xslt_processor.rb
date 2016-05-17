@@ -1,3 +1,4 @@
+require_relative 'task_utils'
 require_relative 'xml_exception'
 
 class XSLTProcessor
@@ -5,11 +6,11 @@ class XSLTProcessor
   class TransformError < XMLException
   end
 
-  def initialize(xslt_file)
+  def initialize(xslt_source)
     factory = javax.xml.transform.TransformerFactory.new_instance
 
     begin
-      @transformer = factory.new_transformer(javax.xml.transform.stream.StreamSource.new(java.io.File.new(xslt_file)))
+      @transformer = factory.new_transformer(source_for(xslt_source))
     rescue
       raise TransformError.new("XSLT transform failed to load", $!)
     end
@@ -27,6 +28,23 @@ class XSLTProcessor
     end
 
     File.rename(temp_output, output_file)
+  end
+
+  private
+
+  def source_for(s)
+    if TaskUtils.http_url?(s)
+      is = java.net.URL.new(s).open_stream
+      xslt = begin
+               is.to_io.read
+             ensure
+               is.close
+             end
+
+      javax.xml.transform.stream.StreamSource.new(java.io.StringReader.new(xslt))
+    else
+      javax.xml.transform.stream.StreamSource.new(java.io.File.new(s))
+    end
   end
 
 end

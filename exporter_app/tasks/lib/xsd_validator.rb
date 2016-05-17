@@ -1,3 +1,4 @@
+require_relative 'task_utils'
 require_relative 'xml_exception'
 
 class XSDValidator
@@ -7,7 +8,9 @@ class XSDValidator
 
   def initialize(schema_file)
     schema_factory = javax.xml.validation.SchemaFactory.new_instance(javax.xml.XMLConstants::W3C_XML_SCHEMA_NS_URI)
-    schema = schema_factory.new_schema(java.io.File.new(schema_file))
+
+    source = TaskUtils.http_url?(schema_file) ? java.net.URL.new(schema_file) : java.io.File.new(schema_file)
+    schema = schema_factory.new_schema(source)
 
     @validator = schema.new_validator
   end
