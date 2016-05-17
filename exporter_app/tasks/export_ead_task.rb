@@ -1,6 +1,7 @@
 require 'fileutils'
 require 'json'
 require_relative 'task_interface'
+require_relative 'lib/xml_cleaner'
 require_relative 'lib/xsd_validator'
 require_relative 'lib/xslt_processor'
 require_relative 'lib/sqlite_work_queue'
@@ -36,8 +37,7 @@ class ExportEADTask < TaskInterface
 
     load_into_work_queue(updates)
 
-    # FIXME: Need to stop if `process` tells us we're outside the window
-    while item = @work_queue.next
+    while (still_running = process.running?) && (item = @work_queue.next)
       if item[:action] == 'add'
         begin
           download_ead(item)
@@ -57,6 +57,12 @@ class ExportEADTask < TaskInterface
       end
 
       @work_queue.done(item)
+    end
+
+    if !still_running
+      puts "Task finished when end of window was reached"
+    elsif !item
+      puts "Work queue completed!"
     end
 
     @work_queue.put_int_status("last_read_time", now.to_i)
@@ -121,21 +127,22 @@ class ExportEADTask < TaskInterface
     File.open(tempfile, 'w') do |io|
       ead = @as_client.export(id, repo_id, @export_options)
 
-      # FIXME: This gets hornstein.xml parsing, but should be removed in the final version
-      ead = ead.gsub(/<extref ns2:href.*<\/extref>/mi, '')
-
       io.write(ead)
     end
 
+    # Make sure we don't have any stray namespaces that will trip up the
+    # subsequent validations/transformations.
+    XMLCleaner.new.clean(tempfile)
+
     begin
-      validate_ead!(item[:identifier], tempfile)
+      run_xslt_transforms(item[:identifier], tempfile)
     rescue
       File.delete(tempfile)
       raise $!
     end
 
     begin
-      run_xslt_transforms(item[:identifier], tempfile)
+      validate_ead!(item[:identifier], tempfile)
     rescue
       File.delete(tempfile)
       raise $!

@@ -30,7 +30,7 @@ class ProcessManager
     def call
       @thread = Thread.new do
         begin
-          status = 'completed'
+          status = JobStatus::COMPLETED
 
           @job.before_hooks.each do |hook|
             hook.call(@job.task)
@@ -42,14 +42,13 @@ class ProcessManager
             @job.after_hooks.each do |hook|
               hook.call(@job.task)
             end
-
           rescue
             $stderr.puts($!)
             $stderr.puts($@.join("\n"))
-            status = 'failed'
+            status = JobStatus::FAILED
           ensure
             begin
-              status = terminated? ? 'terminated' : status
+              status = terminated? ? JobStatus::TERMINATED : status
 
               # THINKME: This callback happens on a different thread
               @callback.call(@job, status)

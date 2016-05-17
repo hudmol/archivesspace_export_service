@@ -35,7 +35,7 @@ class JobDefinitions
       config
     rescue
       # Log a very obvious warning...
-      $stderr.puts("\n\nINVALID CONFIGURATION -- could not read your config.rb file -- #{$!}\n\n")
+      $stderr.puts("\n\nINVALID CONFIGURATION -- could not read your #{File.basename(@config_file)} file -- #{$!}\n\n")
       load_checkpointed_config
     end
   end

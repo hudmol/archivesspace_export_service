@@ -4,7 +4,7 @@ class XMLException < StandardError
            "\n" +
            ("=" * 72) +
            "\n" +
-           cause +
+           cause.class.to_s + ': ' + cause.message +
            "\n" +
            ("=" * 72) +
            "\n")

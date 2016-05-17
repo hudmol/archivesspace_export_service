@@ -7,13 +7,12 @@ class ExporterApp
     # Load everything
     ["lib", "job_types", "tasks"].each do |dir|
       Dir.glob(base_dir("#{dir}/*.rb")).each do |file|
-        load(File.absolute_path(file))
+        require(File.absolute_path(file))
       end
     end
 
     job_definitions = JobDefinitions.from_config(base_dir("config/jobs.rb"))
 
-    # SQLite?
     job_state_storage = JobStateStorage.new
 
     process_manager = ProcessManager.new
@@ -34,7 +33,7 @@ class ExporterApp
           process_manager.start_job(job, proc { |job, status|
                                       # THINKME: This needs to be thread-safe
                                       job_state_storage.job_completed(job, status)
-                                      $stderr.puts(job_state_storage.inspect)
+                                      job_state_storage.dump
                                     })
 
         else

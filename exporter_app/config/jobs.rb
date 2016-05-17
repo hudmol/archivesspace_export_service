@@ -13,6 +13,7 @@
                    :days_of_week => ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
                    :start_time => '00:00',
                    :end_time => '23:59',
+                   :minimum_seconds_between_runs => 5,
 
                    :task => ExportEADTask,
                    :task_parameters => {
@@ -46,6 +47,7 @@
                    :days_of_week => ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
                    :start_time => '00:00',
                    :end_time => '23:59',
+                   :minimum_seconds_between_runs => 5,
 
                    :task => ExportEADTask,
                    :task_parameters => {
@@ -70,6 +72,7 @@
                    ],
 
                    :after_hooks => [
+                     ErbRenderer.new("templates/manifest.md.erb", "README.md"),
                      ShellRunner.new("scripts/commit_workspace.sh"),
                    ]),
 
@@ -78,21 +81,12 @@
                    :days_of_week => ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
                    :start_time => '00:00',
                    :end_time => '23:59',
+                   :minimum_seconds_between_runs => 5,
 
                    :task => RepositoryMergeTask,
                    :task_parameters => {
                      :jobs_to_merge => ['001', '002'],
-                     :git_remote => 'somewhere'
+                     :git_remote => 'https://yourusername:yourpassword@github.com/yourusername/yourrepo.git'
                    })
-
-
-    # IntervalJob.new(:identifier => '003',
-    #                 :description => 'Important Resource',
-    #                 :interval_minutes => 60),
-    # 
-    # OneOffJob.new(:identifier => '004',
-    #               :description => 'Do it!'),
-
-
   ]
 }

@@ -131,8 +131,10 @@ done
 # Fully consistent again
 rm -f "$REPO_SNAPSHOT_FILE"
 
-# Now we're fully up to date.  Push to git!
-git remote rm origin 2>/dev/null || true
-git remote add origin "$GIT_REMOTE"
+if [ "$GIT_REMOTE" != "" ]; then
+    # Now we're fully up to date.  Push to git!
+    git remote rm origin 2>/dev/null || true
+    git remote add origin "$GIT_REMOTE"
 
-#git push origin master
+    git push -f origin master
+fi
