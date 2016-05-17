@@ -29,7 +29,7 @@
                        :numbered_cs => false
                      },
 
-                     # :archivesspace_ead_schema_validations => ['config/ead.xsd'],
+                     :validation_schema => ['config/ead.xsd'],
                      :xslt_transforms => ['config/transform.xslt'],
                    },
 
@@ -63,7 +63,7 @@
                        :numbered_cs => false
                      },
 
-                     # :archivesspace_ead_schema_validations => ['config/ead.xsd'],
+                     :validation_schema => ['config/ead.xsd'],
                      :xslt_transforms => ['config/transform.xslt'],
                    },
 
