@@ -1,15 +1,7 @@
-# Use cases:
-#
-#  * Run every morning at 2am for 4 hours
-#
-#  * Run every Friday night at 2am
-#
-#  * Run this job once, right now
-
 {
   jobs: [
-    WeekdayJob.new(:identifier => '001',
-                   :description => 'Every morning',
+    WeekdayJob.new(:identifier => 'ead',
+                   :description => 'Export EAD versions of resource records',
                    :days_of_week => ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
                    :start_time => '00:00',
                    :end_time => '23:59',
@@ -29,7 +21,7 @@
                        :numbered_cs => false
                      },
 
-                     # :archivesspace_ead_schema_validations => ['config/ead.xsd'],
+                     :validation_schema => ['config/ead.xsd'],
                      :xslt_transforms => ['config/transform.xslt'],
                    },
 
@@ -42,8 +34,8 @@
                      ShellRunner.new("scripts/commit_workspace.sh"),
                    ]),
 
-    WeekdayJob.new(:identifier => '002',
-                   :description => 'Every morning',
+    WeekdayJob.new(:identifier => 'plaintext',
+                   :description => 'Export plaintext versions of resource records',
                    :days_of_week => ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
                    :start_time => '00:00',
                    :end_time => '23:59',
@@ -63,8 +55,8 @@
                        :numbered_cs => false
                      },
 
-                     # :archivesspace_ead_schema_validations => ['config/ead.xsd'],
-                     :xslt_transforms => ['config/transform.xslt'],
+                     # Our EAD -> Plaintext XSLT
+                     :xslt_transforms => ['https://raw.githubusercontent.com/saa-ead-roundtable/ead-stylesheets/14d937a237e449874947dcf4b96a9d10ffc6c942/dsc-3-column-table/threecolumn_dsc.xsl'],
                    },
 
                    :before_hooks => [
@@ -76,7 +68,7 @@
                      ShellRunner.new("scripts/commit_workspace.sh"),
                    ]),
 
-    WeekdayJob.new(:identifier => '003',
+    WeekdayJob.new(:identifier => 'git_repository',
                    :description => 'Combine repositories for the other jobs and push them up daily',
                    :days_of_week => ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
                    :start_time => '00:00',
@@ -85,8 +77,15 @@
 
                    :task => RepositoryMergeTask,
                    :task_parameters => {
-                     :jobs_to_merge => ['001', '002'],
-                     :git_remote => 'https://yourusername:yourpassword@github.com/yourusername/yourrepo.git'
+                     :jobs_to_merge => ['ead', 'plaintext'],
+
+                     # You can use a URL with an embedded username or password like this
+                     :git_remote => 'https://yourusername:yourpassword@github.com/yourusername/yourrepo.git',
+
+                     # Or you can use an SSH URL with a Github deploy key
+                     # configured.  See the `bin/generate_deploy_key.sh` script
+                     # for instructions on how to do that.
+                     # :git_remote => 'git@github.com:yourusername/yourrepo.git',
                    })
   ]
 }

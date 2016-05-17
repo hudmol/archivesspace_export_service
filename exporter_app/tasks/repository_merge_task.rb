@@ -19,7 +19,8 @@ class RepositoryMergeTask < TaskInterface
     {
       :workspace_directory => @workspace_directory,
       :exported_directory => ExportEADTask::EXPORTED_DIR,
-      :git_remote => @git_remote
+      :git_remote => @git_remote,
+      :ssh_wrapper => ExporterApp.base_dir("bin/ssh_wrapper.sh")
     }
   end
 

@@ -22,7 +22,7 @@ class ExportEADTask < TaskInterface
     config = ExporterApp.config
     @as_client = ArchivesSpaceClient.new(config[:aspace_backend_url], config[:aspace_username], config[:aspace_password])
 
-    @archivesspace_ead_schema_validations = task_params.fetch(:archivesspace_ead_schema_validations, [])
+    @validation_schema = task_params.fetch(:validation_schema, [])
     @xslt_transforms = task_params.fetch(:xslt_transforms, [])
 
     @search_options = task_params.fetch(:search_options)
@@ -172,14 +172,14 @@ class ExportEADTask < TaskInterface
     [path_for_export_file(id, 'xml'), path_for_export_file("#{id}", 'json')].each do |file|
       begin
         File.delete(file)
-      rescue Errno::NOENT
+      rescue Errno::ENOENT
         # so it's not there, that's cool
       end
     end
   end
 
   def validate_ead!(identifier, file_to_validate)
-    @archivesspace_ead_schema_validations.each do |schema_file|
+    @validation_schema.each do |schema_file|
       XSDValidator.new(schema_file).validate(identifier, file_to_validate)
     end
   end
