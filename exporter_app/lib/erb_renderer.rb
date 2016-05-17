@@ -16,6 +16,9 @@ class ErbRenderer < HookInterface
 
     full_export_path = File.join(export_directory, subdirectory)
 
+    # Nothing has been exported yet
+    return if !Dir.exist?(full_export_path)
+
     data = TemplateData.new(combined_json(full_export_path))
 
     File.open(output_file(full_export_path), 'w') {|file|
