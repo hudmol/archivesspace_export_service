@@ -86,7 +86,7 @@
                    :task => RepositoryMergeTask,
                    :task_parameters => {
                      :jobs_to_merge => ['001', '002'],
-                     :git_remote => 'somewhere'
+                     :git_remote => 'https://yourusername:yourpassword@github.com/yourusername/yourrepo.git'
                    })
   ]
 }
