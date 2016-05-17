@@ -1,11 +1,3 @@
-# Use cases:
-#
-#  * Run every morning at 2am for 4 hours
-#
-#  * Run every Friday night at 2am
-#
-#  * Run this job once, right now
-
 {
   jobs: [
     WeekdayJob.new(:identifier => '001',
