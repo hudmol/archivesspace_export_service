@@ -17,8 +17,6 @@ class JobStateStorage
   end
 
   def initialize
-    java.lang.Class.for_name("org.sqlite.JDBC")
-
     @db = SQLiteDB.new(ExporterApp.base_dir("workspace/job_state.db"))
     create_tables
     reset_running_jobs
