@@ -106,6 +106,11 @@ for workspace in  ${1+"$@"}; do
         # Initially we'll start this off on the first commit for the
         # branch, which will be an empty "initial import" one anyway.
 
+        if [ ! `git branch --remote --list "$repo_name/master"` ]; then
+            echo "Branch $repo_name/master is not ready yet"
+            continue
+        fi
+
         target_commit=$(git rev-list --reverse "$repo_name/master" | sed -n 1p)
 
         git checkout -b "_${repo_name}" "$target_commit"
