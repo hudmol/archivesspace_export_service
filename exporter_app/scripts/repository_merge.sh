@@ -136,5 +136,5 @@ if [ "$GIT_REMOTE" != "" ]; then
     git remote rm origin 2>/dev/null || true
     git remote add origin "$GIT_REMOTE"
 
-    git push origin master
+    git push -f origin master
 fi
