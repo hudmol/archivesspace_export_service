@@ -1,4 +1,5 @@
 require_relative 'xml_exception'
+require 'saxon-xslt'
 
 class XSLTProcessor
 
@@ -6,21 +7,22 @@ class XSLTProcessor
   end
 
   def initialize(xslt_file)
-    factory = javax.xml.transform.TransformerFactory.new_instance
-
     begin
-      @transformer = factory.new_transformer(javax.xml.transform.stream.StreamSource.new(java.io.File.new(xslt_file)))
+      @transformer = Saxon.XSLT(File.open(xslt_file), system_id: File.absolute_path(xslt_file))
     rescue
       raise TransformError.new("XSLT transform failed to load", $!)
     end
   end
 
   def transform(identifier, input_file, output_file)
-    temp_output = "#{output_file}.tmp"
-
     begin
-      @transformer.transform(javax.xml.transform.stream.StreamSource.new(java.io.File.new(input_file)),
-                             javax.xml.transform.stream.StreamResult.new(java.io.File.new(temp_output)))
+      temp_output = "#{output_file}.tmp"
+      ead = Saxon.XML(File.read(input_file))
+      result = @transformer.apply_to(ead)
+
+      File.open(temp_output, 'w') do |file|
+        file.write(result)
+      end
     rescue
       File.delete(temp_output) rescue nil
       raise TransformError.new("XSLT transform failed for record #{identifier}", $!)
