@@ -27,11 +27,15 @@ class ExportEADTask < TaskInterface
 
     @search_options = task_params.fetch(:search_options)
     @export_options = task_params.fetch(:export_options)
+
+    @log = ExporterApp.log_for(job_identifier)
+    @log.info("ExportEADTask initialized")
   end
 
   def call(process)
     now = Time.now
     last_read_time = @work_queue.get_int_status("last_read_time") { 0 }
+    @log.debug("last_read_time: #{last_read_time}")
 
     updates = @as_client.updates_since(last_read_time, sanitized_search_options)
 

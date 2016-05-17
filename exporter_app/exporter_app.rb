@@ -11,6 +11,10 @@ class ExporterApp
       end
     end
 
+    @log_manager = LogManager.new
+    log = log_for('APP')
+    log.info("*** Exporter Application started ***")
+
     job_definitions = JobDefinitions.from_config(base_dir("config/jobs.rb"))
 
     job_state_storage = JobStateStorage.new
@@ -65,6 +69,11 @@ class ExporterApp
 
   def self.workspace_for_job(job_id)
     File.absolute_path(base_dir("workspace/#{job_id}"))
+  end
+
+
+  def self.log_for(progname)
+    @log_manager.log_for(progname)
   end
 
 end

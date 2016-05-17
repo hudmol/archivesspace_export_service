@@ -25,11 +25,14 @@ class ProcessManager
       @callback = completed_callback
       @should_terminate = java.util.concurrent.atomic.AtomicBoolean.new(false)
       @thread = :worker_not_started
+      @log = ExporterApp.log_for(@job.id)
+      @log.info("Initialized")
     end
 
     def call
       @thread = Thread.new do
         begin
+          @log.info("Running")
           status = JobStatus::COMPLETED
 
           @job.before_hooks.each do |hook|
@@ -43,8 +46,8 @@ class ProcessManager
               hook.call(@job.task)
             end
           rescue
-            $stderr.puts($!)
-            $stderr.puts($@.join("\n"))
+            @log.error($!)
+            @log.error($@.join("\n"))
             status = JobStatus::FAILED
           ensure
             begin
@@ -53,13 +56,13 @@ class ProcessManager
               # THINKME: This callback happens on a different thread
               @callback.call(@job, status)
             rescue
-              $stderr.puts($!)
-              $stderr.puts($@.join("\n"))
+              @log.error($!)
+              @log.error($@.join("\n"))
             end
           end
         rescue
-          $stderr.puts($!)
-          $stderr.puts($@.join("\n"))
+          @log.error($!)
+          @log.error($@.join("\n"))
         end
       end
     end
