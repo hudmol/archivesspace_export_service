@@ -7,7 +7,7 @@ class XSLTProcessor
   end
 
   def initialize(xslt_source)
-    factory = javax.xml.transform.TransformerFactory.new_instance
+    factory = javax.xml.transform.TransformerFactory.new_instance("net.sf.saxon.TransformerFactoryImpl", nil);
 
     begin
       @transformer = factory.new_transformer(source_for(xslt_source))
@@ -17,11 +17,12 @@ class XSLTProcessor
   end
 
   def transform(identifier, input_file, output_file)
-    temp_output = "#{output_file}.tmp"
-
     begin
+      temp_output = "#{output_file}.tmp"
+
       @transformer.transform(javax.xml.transform.stream.StreamSource.new(java.io.File.new(input_file)),
                              javax.xml.transform.stream.StreamResult.new(java.io.File.new(temp_output)))
+
     rescue
       File.delete(temp_output) rescue nil
       raise TransformError.new("XSLT transform failed for record #{identifier}", $!)
