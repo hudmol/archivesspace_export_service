@@ -13,6 +13,7 @@
                    :days_of_week => ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
                    :start_time => '00:00',
                    :end_time => '23:59',
+                   :minimum_seconds_between_runs => 5,
 
                    :task => ExportEADTask,
                    :task_parameters => {
@@ -46,6 +47,7 @@
                    :days_of_week => ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
                    :start_time => '00:00',
                    :end_time => '23:59',
+                   :minimum_seconds_between_runs => 5,
 
                    :task => ExportEADTask,
                    :task_parameters => {
@@ -78,6 +80,7 @@
                    :days_of_week => ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
                    :start_time => '00:00',
                    :end_time => '23:59',
+                   :minimum_seconds_between_runs => 5,
 
                    :task => RepositoryMergeTask,
                    :task_parameters => {

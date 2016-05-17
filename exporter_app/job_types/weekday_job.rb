@@ -30,13 +30,15 @@ class WeekdayJob < Job
 
     @time_range = TimeRange.new(params.fetch(:start_time), params.fetch(:end_time))
     @days_of_week = params.fetch(:days_of_week).map(&:upcase)
+
+    @minimum_seconds_between_runs = params.fetch(:minimum_seconds_between_runs, 24 * 60 * 60)
   end
 
   def should_run?(now, last_run_info)
     # If the current time is within our window and we haven't already run the job today...
     @time_range.include?(now) &&
       @days_of_week.include?(weekday_of(now)) &&
-      (last_run_info.last_start_time.to_date != now.to_date)
+      (now.to_i - last_run_info.last_start_time.to_i) >= @minimum_seconds_between_runs
   end
 
 
