@@ -172,7 +172,7 @@ class ExportEADTask < TaskInterface
     [path_for_export_file(id, 'xml'), path_for_export_file("#{id}", 'json')].each do |file|
       begin
         File.delete(file)
-      rescue Errno::NOENT
+      rescue Errno::ENOENT
         # so it's not there, that's cool
       end
     end
