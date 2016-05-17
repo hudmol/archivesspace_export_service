@@ -72,6 +72,7 @@
                    ],
 
                    :after_hooks => [
+                     ErbRenderer.new("templates/manifest.md.erb", "README.md"),
                      ShellRunner.new("scripts/commit_workspace.sh"),
                    ]),
 
