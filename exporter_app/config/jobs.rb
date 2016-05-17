@@ -87,15 +87,5 @@
                      :jobs_to_merge => ['001', '002'],
                      :git_remote => 'somewhere'
                    })
-
-
-    # IntervalJob.new(:identifier => '003',
-    #                 :description => 'Important Resource',
-    #                 :interval_minutes => 60),
-    # 
-    # OneOffJob.new(:identifier => '004',
-    #               :description => 'Do it!'),
-
-
   ]
 }
