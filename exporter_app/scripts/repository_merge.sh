@@ -131,6 +131,12 @@ done
 # Fully consistent again
 rm -f "$REPO_SNAPSHOT_FILE"
 
+
+if [ "$SSH_WRAPPER" != "" ]; then
+    export GIT_SSH="$SSH_WRAPPER"
+fi
+
+
 if [ "$GIT_REMOTE" != "" ]; then
     # Now we're fully up to date.  Push to git!
     git remote rm origin 2>/dev/null || true

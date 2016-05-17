@@ -53,7 +53,7 @@ class ExporterApp
 
 
   def self.base_dir(path = nil)
-    base = File.dirname(__FILE__)
+    base = File.absolute_path(File.dirname(__FILE__))
 
     if path
       File.join(base, path)
