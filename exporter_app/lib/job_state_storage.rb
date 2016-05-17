@@ -48,7 +48,7 @@ class JobStateStorage
         rs = statement.execute_query
         begin
           if rs.next
-            ret = JobState.from_row(rs)
+            JobState.from_row(rs)
           else
             null_job_info
           end
