@@ -66,7 +66,7 @@ class ResourceUpdateMonitor
         mods = mods.where(:identifier => @start_id)
       end
 
-      mods = mods.select(:id, :title, :identifier, :repo_id, :publish, :suppressed)
+      mods = mods.select(:id, :title, :identifier, :ead_id, :repo_id, :publish, :suppressed)
 
       mods.each do |res|
         if in_range(res)
