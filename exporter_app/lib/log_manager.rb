@@ -3,15 +3,18 @@ require 'logger'
 
 class LogManager
 
+  attr_reader :log_file
+
   def initialize
     log_dir = ExporterApp.base_dir("logs")
     FileUtils.mkdir_p(log_dir)
-    @log = Logger.new(File.join(log_dir, "exporter_app.out"))
+    @log_file = File.join(log_dir, "exporter_app.out")
+    @log = Logger.new(@log_file)
     level = ExporterApp.config[:log_level]
     @log.level = Kernel.const_get("Logger::#{level.upcase}")
   end
 
-  def log_for(progname)
+  def log_for(progname = nil)
     Log.new(@log, progname)
   end
 
@@ -20,7 +23,12 @@ class LogManager
 
     def initialize(log, progname)
       @log = log
-      @progname = progname
+      @progname = thread_name + (progname ? (':' + progname) : '')
+    end
+
+    def alert(message)
+      # FIXME: Send an email!
+      @log.error(@progname) { message }
     end
 
 
@@ -36,6 +44,12 @@ class LogManager
 
     def debug(message)
       @log.debug(@progname) { message }
+    end
+
+    private
+
+    def thread_name
+      Thread.current['name'] || Thread.current.to_s
     end
 
   end

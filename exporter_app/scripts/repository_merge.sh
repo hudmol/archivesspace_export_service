@@ -42,11 +42,11 @@ REPO_SNAPSHOT_FILE="$WORKSPACE_DIRECTORY/.snapshot"
 
 # Create our git repo if it doesn't exist yet
 if [ ! -d .git ]; then
-    git init
+    git init --quiet
 
     echo "/$(basename $REPO_SNAPSHOT_FILE)" > .gitignore
     git add .gitignore
-    git commit -m "Initial import"
+    git commit --quiet -m "Initial import"
 fi
 
 # If a snapshot file is present, we were interrupted.  Roll back now.
@@ -58,7 +58,7 @@ if [ -e "$REPO_SNAPSHOT_FILE" ]; then
     git cherry-pick --abort 2>/dev/null || true
 
     # Clear any existing branches
-    git checkout master
+    git checkout --quiet master
     git for-each-ref --format='%(refname)' 'refs/heads/_*' | while read branch_ref; do
                                                                  branch=$(echo "$branch_ref" | sed 's/^.*\///')
                                                                  git branch -D "$branch"
@@ -69,10 +69,10 @@ if [ -e "$REPO_SNAPSHOT_FILE" ]; then
                                     branch=$(echo "$branch_ref" | sed 's/^.*\///')
 
                                     if [ "$branch" = "master" ]; then
-                                        git checkout master
-                                        git reset --hard "$commit"
+                                        git checkout --quiet master
+                                        git reset --quiet --hard "$commit"
                                     else
-                                        git checkout -b "$branch" "$commit"
+                                        git checkout --quiet -b "$branch" "$commit"
                                     fi
                                 done
 
@@ -98,7 +98,7 @@ for workspace in  ${1+"$@"}; do
 
     # This will fail if we've already got the remote, and that's fine
     git remote add "$repo_name" "$repo_path" 2>/dev/null || true
-    git fetch "$repo_name"
+    git fetch --quiet "$repo_name"
 
     if [ ! `git branch --list _${repo_name}` ]; then
         # Create a local branch mirroring our remote, prefixed with an _
@@ -113,7 +113,7 @@ for workspace in  ${1+"$@"}; do
 
         target_commit=$(git rev-list --reverse "$repo_name/master" | sed -n 1p)
 
-        git checkout -b "_${repo_name}" "$target_commit"
+        git checkout --quiet -b "_${repo_name}" "$target_commit"
         echo "done"
     fi
 
@@ -121,16 +121,16 @@ for workspace in  ${1+"$@"}; do
     # this repository.  We'll use that branch to track our state.
 
     # Cherry pick the commits we need--anything added to master since our last pull
-    git checkout master
+    git checkout --quiet master
 
     if [ "`git rev-list --reverse "_${repo_name}".."${repo_name}/master"`" ]; then
         git rev-list --reverse "_${repo_name}".."${repo_name}/master" | xargs git cherry-pick
     fi
 
     # Now reset our tracking branch to the latest commit we've (just) cherry picked
-    git checkout "_${repo_name}"
-    git reset --hard "${repo_name}/master"
-    git checkout master
+    git checkout --quiet "_${repo_name}"
+    git reset --quiet --hard "${repo_name}/master"
+    git checkout --quiet master
 done
 
 # Fully consistent again
@@ -147,5 +147,5 @@ if [ "$GIT_REMOTE" != "" ]; then
     git remote rm origin 2>/dev/null || true
     git remote add origin "$GIT_REMOTE"
 
-    git push -f origin master
+    git push --quiet -f origin master
 fi

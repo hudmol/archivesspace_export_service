@@ -21,8 +21,9 @@
                        :numbered_cs => false
                      },
 
-                     :validation_schema => ['config/ead.xsd'],
                      :xslt_transforms => ['config/transform.xslt'],
+                     :validation_schema => ['config/ead.xsd'],
+                     :schematron_checks => ['config/schematron.sch'],
                    },
 
                    :before_hooks => [
@@ -30,6 +31,7 @@
                    ],
 
                    :after_hooks => [
+                     FopPdfGenerator.new('config/as-ead-pdf.xsl'),
                      ErbRenderer.new("templates/manifest.md.erb", "README.md"),
                      ShellRunner.new("scripts/commit_workspace.sh"),
                    ]),

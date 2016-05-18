@@ -3,6 +3,7 @@ require 'json'
 require_relative 'task_interface'
 require_relative 'lib/xml_cleaner'
 require_relative 'lib/xsd_validator'
+require_relative 'lib/schematron_validator'
 require_relative 'lib/xslt_processor'
 require_relative 'lib/sqlite_work_queue'
 require_relative 'lib/archivesspace_client'
@@ -23,17 +24,20 @@ class ExportEADTask < TaskInterface
     @as_client = ArchivesSpaceClient.new(config[:aspace_backend_url], config[:aspace_username], config[:aspace_password])
 
     @validation_schema = task_params.fetch(:validation_schema, [])
+    @schematron_checks = task_params.fetch(:schematron_checks, [])
+
     @xslt_transforms = task_params.fetch(:xslt_transforms, [])
 
     @search_options = task_params.fetch(:search_options)
     @export_options = task_params.fetch(:export_options)
 
+    @last_start_time = nil
+
     @log = ExporterApp.log_for(job_identifier)
-    @log.info("ExportEADTask initialized")
   end
 
   def call(process)
-    now = Time.now
+    @last_start_time = Time.now
     last_read_time = @work_queue.get_int_status("last_read_time") { 0 }
     @log.debug("Last read time: #{last_read_time}")
 
@@ -71,7 +75,11 @@ class ExportEADTask < TaskInterface
       @log.info("Work queue completed!")
     end
 
-    @work_queue.put_int_status("last_read_time", now.to_i)
+  end
+
+  def completed!
+    # Record a successful run
+    @work_queue.put_int_status("last_read_time", @last_start_time.to_i)
   end
 
   def exported_variables
@@ -87,12 +95,8 @@ class ExportEADTask < TaskInterface
   def load_into_work_queue(updates)
     @log.debug("Loading updates into work queue")
     updates['adds'].each do |add|
-      @work_queue.push('add', add['id'], {
-                         'title' => add['title'],
-                         'identifier' => add['identifier'].to_json,
-                         'repo_id' => add['repo_id'],
-                         'uri' => add['uri'],
-                       })
+      @work_queue.push('add', add['id'],
+                       add.merge('identifier' => add['identifier'].to_json))
     end
 
     # James says that I'll never need the format of the remove list to be the
@@ -198,6 +202,11 @@ class ExportEADTask < TaskInterface
     @validation_schema.each do |schema_file|
       XSDValidator.new(schema_file).validate(identifier, file_to_validate)
     end
+
+    @schematron_checks.each do |schematron_file|
+      SchematronValidator.new(schematron_file).validate(identifier, file_to_validate)
+    end
+
   end
 
   def run_xslt_transforms(identifier, tempfile)

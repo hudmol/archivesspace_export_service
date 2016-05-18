@@ -3,7 +3,6 @@ class ProcessManager
   def initialize
     @processes_by_job = {}
     @log = ExporterApp.log_for("ProcessManager")
-    @log.debug("Initialized")
   end
 
   def start_job(job, completed_callback)
@@ -29,32 +28,36 @@ class ProcessManager
       @callback = completed_callback
       @should_terminate = java.util.concurrent.atomic.AtomicBoolean.new(false)
       @thread = :worker_not_started
-      @log = ExporterApp.log_for(@job.id)
-      @log.info("Initialized")
+      @log = ExporterApp.log_for
     end
 
     def call
       @thread = Thread.new do
         begin
-          @log.info("Running")
+          Thread.current['name'] = "Job #{@job.id} (#{@job.task.class}) - #{Thread.current.object_id}"
+          log = ExporterApp.log_for
+
+          log.info("Running")
           status = JobStatus::COMPLETED
 
-          @log.debug("Running before hooks")
+          log.debug("Running before hooks")
           @job.before_hooks.each do |hook|
             hook.call(@job.task)
           end
 
           begin
-            @log.debug("Running main task")
+            log.debug("Running main task")
             @job.task.call(self)
 
-            @log.debug("Running after hooks")
+            log.debug("Running after hooks")
             @job.after_hooks.each do |hook|
               hook.call(@job.task)
             end
+
+            @job.task.completed!
           rescue
-            @log.error($!)
-            @log.error($@.join("\n"))
+            log.error($!)
+            log.error($@.join("\n"))
             status = JobStatus::FAILED
           ensure
             begin
@@ -63,13 +66,13 @@ class ProcessManager
               # THINKME: This callback happens on a different thread
               @callback.call(@job, status)
             rescue
-              @log.error($!)
-              @log.error($@.join("\n"))
+              log.error($!)
+              log.error($@.join("\n"))
             end
           end
         rescue
-          @log.error($!)
-          @log.error($@.join("\n"))
+          log.error($!)
+          log.error($@.join("\n"))
         end
       end
     end

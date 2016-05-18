@@ -2,6 +2,7 @@ class JobDefinitions
 
   def initialize(config_file)
     @config_file = config_file
+    @log = ExporterApp.log_for(self.class.to_s)
   end
 
   def self.from_config(config_file)
@@ -35,7 +36,7 @@ class JobDefinitions
       config
     rescue
       # Log a very obvious warning...
-      $stderr.puts("\n\nINVALID CONFIGURATION -- could not read your #{File.basename(@config_file)} file -- #{$!}\n\n")
+      @log.alert("\n\nINVALID CONFIGURATION -- could not read your #{File.basename(@config_file)} file -- #{$!}\n\n")
       load_checkpointed_config
     end
   end
@@ -51,7 +52,7 @@ class JobDefinitions
   def load_checkpointed_config
     if File.exists?(checkpoint_file)
       begin
-	$stderr.puts("Running with previous valid configuration")
+	@log.info("Running with previous valid configuration")
 	return eval(File.read(checkpoint_file))
       rescue
 	nil

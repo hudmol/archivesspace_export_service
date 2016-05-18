@@ -1,5 +1,14 @@
 class SQLiteWorkQueue
 
+  # Additional pieces of metadata we capture about each record
+  EXTRA_COLUMNS = [
+    {:name => 'identifier', :sqltype => 'text', :jdbctype => 'string'},
+    {:name => 'repo_id', :sqltype => 'integer', :jdbctype => 'int'},
+    {:name => 'title', :sqltype => 'text', :jdbctype => 'string'},
+    {:name => 'uri', :sqltype => 'text', :jdbctype => 'string'},
+    {:name => 'ead_id', :sqltype => 'text', :jdbctype => 'string'},
+  ]
+
   def initialize(db_file)
     @db = SQLiteDB.new(db_file)
 
@@ -8,10 +17,14 @@ class SQLiteWorkQueue
 
   def push(action, resource_id, extra_args = {})
     @db.with_connection do |conn|
-      extra_args_columns = extra_args.empty? ? '' : (', ' + extra_args.keys.join(', '))
+      # Reject any columns we weren't expecting
+      extra_args = extra_args.to_a.select {|k, _| EXTRA_COLUMNS.find {|col| col[:name] == k}}
+
+      extra_args_columns = extra_args.empty? ? '' : (', ' + extra_args.map(&:first).join(', '))
       extra_args_placeholders = extra_args.empty? ? '' : (', ' + (['?'] * extra_args.length).join(', '))
+
       conn.prepare("insert into work_queue (action, resource_id#{extra_args_columns}) values (?, ?#{extra_args_placeholders})",
-                   [action, resource_id, *extra_args.values]) do |statement|
+                   [action, resource_id, *extra_args.map {|arg| arg[1]}]) do |statement|
         statement.execute_update
       end
     end
@@ -19,19 +32,17 @@ class SQLiteWorkQueue
 
   def next
     @db.with_connection do |conn|
-      conn.prepare("select id, resource_id, action, identifier, repo_id, title, uri, ead_id from work_queue order by id limit 1") do |statement|
+      conn.prepare("select * from work_queue order by id limit 1") do |statement|
         rs = statement.execute_query
         while rs.next
           return {
-            :id => rs.get_int(1),
-            :resource_id => rs.get_int(2),
-            :action => rs.get_string(3),
-            :identifier => rs.get_string(4),
-            :repo_id => rs.get_int(5),
-            :title => rs.get_string(6),
-            :uri => rs.get_string(7),
-            :ead_id => rs.get_string(8),
-          }
+            :id => rs.get_int('id'),
+            :resource_id => rs.get_int('resource_id'),
+            :action => rs.get_string('action'),
+          }.merge(Hash[EXTRA_COLUMNS.map {|column|
+                         [column[:name].intern,
+                          rs.send(:"get#{column[:jdbctype].capitalize}", column[:name])]
+                       }])
         end
       end
     end
@@ -127,8 +138,8 @@ class SQLiteWorkQueue
       statement = conn.create_statement
       statement.execute_update("create table if not exists work_queue" +
                                " (id integer primary key autoincrement," +
-                               " action text, resource_id integer, identifier text," +
-                               " repo_id integer, title text, uri text, ead_id text)")
+                               " action text, resource_id integer, " +
+                               EXTRA_COLUMNS.map {|col| "#{col[:name]} #{col[:sqltype]}"}.join(", ") + ")")
 
       statement.execute_update("create table if not exists status" +
                                " (key primary key, int_value integer)")

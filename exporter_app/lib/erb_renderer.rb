@@ -44,10 +44,22 @@ class ErbRenderer < HookInterface
     json_files = File.join(path, "*.json")
 
     Dir.glob(json_files) do |filename|
-      json.push(JSON.parse(File.read(filename)))
+      record_json = JSON.parse(File.read(filename))
+
+      record_json['other_versions'] ||= {}
+
+      Dir.glob(File.join(path, "#{record_json.fetch('resource_db_id')}.*")).each do |file_version|
+        name = File.basename(file_version)
+        if File.basename(file_version) != record_json['ead_file'] && name != File.basename(filename)
+          label = File.extname(file_version) == "" ? name : File.extname(file_version).upcase[1..-1]
+          record_json['other_versions'][name] = label
+        end
+      end
+
+      json.push(record_json)
     end
 
-    json.sort{|a, b| a[:resource_db_id] <=> b[:resource_db_id]}
+    json.sort{|a, b| a['resource_db_id'] <=> b['resource_db_id']}
   end
 
   def output_file(export_directory)

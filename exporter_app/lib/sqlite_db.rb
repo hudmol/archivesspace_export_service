@@ -5,6 +5,7 @@ class SQLiteDB
   def initialize(db_file)
     java.lang.Class.for_name("org.sqlite.JDBC")
     @db_file = db_file
+    @log = ExporterApp.log_for(self.class.to_s)
   end
 
   def with_connection
@@ -25,6 +26,7 @@ class SQLiteDB
   class Connection
     def initialize(jdbc_connection)
       @jdbc_connection = jdbc_connection
+      @log = ExporterApp.log_for(self.class.to_s)
     end
 
     def prepare(sql, arguments = [])
@@ -35,6 +37,8 @@ class SQLiteDB
           statement.set_string(i + 1, argument)
         elsif argument.is_a?(Integer)
           statement.set_int(i + 1, argument)
+        elsif argument.nil?
+          # Skip it!
         else
           raise "Unrecognized argument type: #{argument.class} in arguments #{arguments.inspect}"
         end
@@ -42,7 +46,7 @@ class SQLiteDB
 
       yield statement
     rescue java.sql.SQLException
-      $stderr.puts("SQL failed: #{sql}: #{$!}")
+      @log.error("SQL failed: #{sql}: #{$!}")
     ensure
       statement.close if statement
     end

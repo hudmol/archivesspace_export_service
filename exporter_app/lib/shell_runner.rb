@@ -5,34 +5,37 @@ class ShellRunner < HookInterface
 
   def initialize(script)
     @script = script
-    @log = ExporterApp.log_for("ShellRunner")
-    @log.debug("Initialized")
   end
 
   def call(task, *args)
+    log = ExporterApp.log_for("ShellRunner")
+
     environment = Hash[task.exported_variables.map {|k, v| [k.to_s.upcase, v.to_s]}]
 
-    @log.debug("Running script: #{@script}")
+    log.debug("Running script: #{@script}")
     exit_status = -1
     Open3.popen3(environment, expand_path(@script), *args) do |stdin, stdout, stderr, wait_thr|
       stdin.close_write
 
       until stdout.eof && stderr.eof
-        out, err = IO.select([stdout], [stderr])
-        if readable = out[0]
-          readable.each do |line|
-            @log.debug(line.chomp)
+        (readable,) = IO.select([stderr, stdout], [])
+        readable.each do |fh|
+          if fh == stderr
+            fh.each do |line|
+              log.error(line.chomp)
+            end
           end
-        end
-        if readable = err[0]
-          readable.each do |line|
-            @log.error(line.chomp)
+
+          if fh == stdout
+            fh.each do |line|
+              log.debug(line.chomp)
+            end
           end
         end
       end
 
       exit_status = wait_thr.value.exitstatus
-      @log.debug("Exit status: #{exit_status}")
+      log.debug("Exit status: #{exit_status}")
     end
 
     if exit_status == 0
