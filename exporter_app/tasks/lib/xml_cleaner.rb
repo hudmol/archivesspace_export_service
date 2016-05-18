@@ -4,6 +4,10 @@ class XMLCleaner
   # before giving up.
   MAX_ITERATIONS = 10000
 
+  def initialize
+    @log = ExporterApp.log_for(self.class.to_s)
+  end
+
   def clean(file_path)
     factory = javax.xml.parsers.DocumentBuilderFactory.new_instance
     factory.setValidating(true)
@@ -20,7 +24,7 @@ class XMLCleaner
       if attempt >= MAX_ITERATIONS
         raise "Maximum error count (#{attempt}) exceeded for this document.  Giving up!"
       else
-        puts "Corrected error in XML markup.  Parsing again (attempt: #{attempt})."
+        @log.info("Corrected error in XML markup.  Parsing again (attempt: #{attempt}).")
         retry
       end
     end

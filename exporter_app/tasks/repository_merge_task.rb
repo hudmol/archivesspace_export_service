@@ -8,7 +8,6 @@ class RepositoryMergeTask < TaskInterface
     @git_remote = task_params.fetch(:git_remote)
 
     @log = ExporterApp.log_for(job_identifier)
-    @log.info("RepositoryMergeTask initialized")
   end
 
   def call(process)

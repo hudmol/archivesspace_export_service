@@ -5,6 +5,7 @@ class SQLiteDB
   def initialize(db_file)
     java.lang.Class.for_name("org.sqlite.JDBC")
     @db_file = db_file
+    @log = ExporterApp.log_for(self.class.to_s)
   end
 
   def with_connection
@@ -42,7 +43,7 @@ class SQLiteDB
 
       yield statement
     rescue java.sql.SQLException
-      $stderr.puts("SQL failed: #{sql}: #{$!}")
+      @log.error("SQL failed: #{sql}: #{$!}")
     ensure
       statement.close if statement
     end

@@ -34,7 +34,6 @@ class ExportEADTask < TaskInterface
     @last_start_time = nil
 
     @log = ExporterApp.log_for(job_identifier)
-    @log.info("ExportEADTask initialized")
   end
 
   def call(process)

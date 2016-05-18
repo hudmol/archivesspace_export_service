@@ -9,6 +9,7 @@ class SchematronValidator
   end
 
   def initialize(schema_file)
+    @log = ExporterApp.log_for(self.class.to_s)
     @schema_file = schema_file
     @schematron_schema = Tempfile.new
 
@@ -33,7 +34,7 @@ class SchematronValidator
     if report =~ /<svrl:failed-assert/
       raise ValidationFailedException.new("Schematron validation failed for #{identifier}:\n#{report}\n")
     else
-      puts "Record #{identifier} successfully validated against #{File.basename(@schema_file)}"
+      @log.info("Record #{identifier} successfully validated against #{File.basename(@schema_file)}")
     end
   end
 

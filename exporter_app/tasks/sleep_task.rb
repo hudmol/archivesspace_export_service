@@ -6,7 +6,6 @@ class SleepTask
     @params = params
 
     @log = ExporterApp.log_for("SleepyHead")
-    @log.info("SleepTask initialized")
   end
 
   def call(process)

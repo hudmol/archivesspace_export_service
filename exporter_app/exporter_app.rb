@@ -23,6 +23,9 @@ class ExporterApp
 
     # last start time, last complete time
 
+    puts "\nArchivesSpace exporter application started!"
+    puts "\nLogging to #{@log_manager.log_file}\n"
+
     # Start the application's scheduling loop
     while true
       log.debug("Top of scheduling loop")
@@ -73,7 +76,7 @@ class ExporterApp
   end
 
 
-  def self.log_for(progname)
+  def self.log_for(progname = nil)
     @log_manager.log_for(progname)
   end
 

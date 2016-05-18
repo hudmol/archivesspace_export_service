@@ -5,6 +5,7 @@ class FopPdfGenerator < HookInterface
 
   def initialize(xslt_file)
     @xslt_file = File.absolute_path(xslt_file)
+    @log = ExporterApp.log_for(self.class.to_s)
   end
 
   def call(task)
@@ -91,7 +92,7 @@ class FopPdfGenerator < HookInterface
       result += "<font kerning=\"yes\" embed-url=\"#{font_path}\" embedding-mode=\"subset\">"
 
       (50..1000).step(50).each do |weight|
-        puts "Loaded font family=#{family} style=#{style} weight=#{weight}"
+        @log.info("Loaded font family=#{family} style=#{style} weight=#{weight}")
         result += "<font-triplet name=\"#{family}\" style=\"#{style}\" weight=\"#{weight}\"/>"
       end
 

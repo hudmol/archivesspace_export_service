@@ -18,15 +18,18 @@ class ShellRunner < HookInterface
       stdin.close_write
 
       until stdout.eof && stderr.eof
-        out, err = IO.select([stdout], [stderr])
-        if readable = out[0]
-          readable.each do |line|
-            @log.debug(line.chomp)
+        (readable,) = IO.select([stderr, stdout], [])
+        readable.each do |fh|
+          if fh == stderr
+            fh.each do |line|
+              @log.error(line.chomp)
+            end
           end
-        end
-        if readable = err[0]
-          readable.each do |line|
-            @log.error(line.chomp)
+
+          if fh == stdout
+            fh.each do |line|
+              @log.debug(line.chomp)
+            end
           end
         end
       end
