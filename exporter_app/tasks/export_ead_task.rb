@@ -27,13 +27,18 @@ class ExportEADTask < TaskInterface
 
     @search_options = task_params.fetch(:search_options)
     @export_options = task_params.fetch(:export_options)
+
+    @log = ExporterApp.log_for(job_identifier)
+    @log.info("ExportEADTask initialized")
   end
 
   def call(process)
     now = Time.now
     last_read_time = @work_queue.get_int_status("last_read_time") { 0 }
+    @log.debug("Last read time: #{last_read_time}")
 
     updates = @as_client.updates_since(last_read_time, sanitized_search_options)
+    @log.debug("Updates from ArchivesSpace: #{updates}")
 
     load_into_work_queue(updates)
 
@@ -43,26 +48,27 @@ class ExportEADTask < TaskInterface
           download_ead(item)
           create_manifest_json(item)
         rescue XSDValidator::ValidationFailedException => e
-          puts "EAD validation failed for record #{item[:identifier]} with the following error:\n"
-          puts e
+          @log.error("EAD validation failed for record #{item[:uri]} with the following error:")
+          @log.error(e)
 
           # THINKME: At the moment we just log this warning and skip over the
           # record, never to be exported again until next changed in
           # ArchivesSpace.
         end
       elsif item[:action] == 'remove'
+        @log.debug("Removing EAD and manifest for #{item}")
         remove_ead_and_manifest(item[:resource_id])
       else
-        puts "Unknown action for item: #{item.inspect}"
+        @log.error("Unknown action for item: #{item}")
       end
 
       @work_queue.done(item)
     end
 
     if !still_running
-      puts "Task finished when end of window was reached"
+      @log.info("Task finished when end of window was reached")
     elsif !item
-      puts "Work queue completed!"
+      @log.info("Work queue completed!")
     end
 
     @work_queue.put_int_status("last_read_time", now.to_i)
@@ -79,6 +85,7 @@ class ExportEADTask < TaskInterface
   private
 
   def load_into_work_queue(updates)
+    @log.debug("Loading updates into work queue")
     updates['adds'].each do |add|
       @work_queue.push('add', add['id'], {
                          'title' => add['title'],
@@ -118,6 +125,7 @@ class ExportEADTask < TaskInterface
   end
 
   def download_ead(item)
+    @log.debug("Downloading EAD for #{item[:uri]}")
     id = item.fetch(:resource_id)
     repo_id = item.fetch(:repo_id)
 
@@ -130,28 +138,35 @@ class ExportEADTask < TaskInterface
       io.write(ead)
     end
 
+    @log.debug("Cleaning XML for #{item[:uri]}")
     # Make sure we don't have any stray namespaces that will trip up the
     # subsequent validations/transformations.
     XMLCleaner.new.clean(tempfile)
 
     begin
+      @log.debug("Running XSLT for #{item[:uri]}")
       run_xslt_transforms(item[:identifier], tempfile)
     rescue
+      @log.debug("XSLT failed for #{item[:uri]}, tidying up")
       File.delete(tempfile)
       raise $!
     end
 
     begin
+      @log.debug("Validating EAD for #{item[:uri]}")
       validate_ead!(item[:identifier], tempfile)
     rescue
+      @log.debug("EAD validation failed for #{item[:uri]}, tidying up")
       File.delete(tempfile)
       raise $!
     end
 
     File.rename(tempfile, outfile)
+    @log.debug("EAD download successful for #{item[:uri]}")
   end
 
   def create_manifest_json(item)
+    @log.debug("Creating manifest json for #{item[:uri]}")
     outfile = path_for_export_file(item[:resource_id], 'json')
 
     File.open("#{outfile}.tmp", 'w') do |io|
@@ -166,6 +181,7 @@ class ExportEADTask < TaskInterface
     end
 
     File.rename("#{outfile}.tmp", outfile)
+    @log.debug("Manifest json created for #{item[:uri]}")
   end
 
   def remove_ead_and_manifest(id)

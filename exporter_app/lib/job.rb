@@ -24,5 +24,8 @@ class Job
     raise NotImplementedError.new("Implement me")
   end
 
+  def to_s
+    "Job: #{@id} - #{@task}"
+  end
 end
 
