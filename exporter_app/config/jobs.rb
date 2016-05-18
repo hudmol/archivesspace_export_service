@@ -31,8 +31,8 @@
                    ],
 
                    :after_hooks => [
-                     ErbRenderer.new("templates/manifest.md.erb", "README.md"),
                      FopPdfGenerator.new('config/as-ead-pdf.xsl'),
+                     ErbRenderer.new("templates/manifest.md.erb", "README.md"),
                      ShellRunner.new("scripts/commit_workspace.sh"),
                    ]),
 
