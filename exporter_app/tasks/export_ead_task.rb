@@ -56,10 +56,10 @@ class ExportEADTask < TaskInterface
           # ArchivesSpace.
         end
       elsif item[:action] == 'remove'
-        @log.debug("Removing EAD and manifest for #{item[:uri]}")
+        @log.debug("Removing EAD and manifest for #{item}")
         remove_ead_and_manifest(item[:resource_id])
       else
-        @log.error("Unknown action for item: #{item[:uri]}")
+        @log.error("Unknown action for item: #{item}")
       end
 
       @work_queue.done(item)

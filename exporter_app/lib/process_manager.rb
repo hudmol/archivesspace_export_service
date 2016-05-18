@@ -7,7 +7,7 @@ class ProcessManager
   end
 
   def start_job(job, completed_callback)
-    @log.debug("Starting job #{job}")
+    @log.debug("Starting #{job}")
     process = Process.new(job, completed_callback)
     @processes_by_job[job] = process
     process.call
