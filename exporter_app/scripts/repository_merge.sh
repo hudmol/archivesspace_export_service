@@ -42,11 +42,11 @@ REPO_SNAPSHOT_FILE="$WORKSPACE_DIRECTORY/.snapshot"
 
 # Create our git repo if it doesn't exist yet
 if [ ! -d .git ]; then
-    git init
+    git init --quiet
 
     echo "/$(basename $REPO_SNAPSHOT_FILE)" > .gitignore
     git add .gitignore
-    git commit -m "Initial import"
+    git commit --quiet -m "Initial import"
 fi
 
 # If a snapshot file is present, we were interrupted.  Roll back now.
@@ -70,7 +70,7 @@ if [ -e "$REPO_SNAPSHOT_FILE" ]; then
 
                                     if [ "$branch" = "master" ]; then
                                         git checkout --quiet master
-                                        git reset --hard "$commit"
+                                        git reset --quiet --hard "$commit"
                                     else
                                         git checkout --quiet -b "$branch" "$commit"
                                     fi
@@ -98,7 +98,7 @@ for workspace in  ${1+"$@"}; do
 
     # This will fail if we've already got the remote, and that's fine
     git remote add "$repo_name" "$repo_path" 2>/dev/null || true
-    git fetch "$repo_name"
+    git fetch --quiet "$repo_name"
 
     if [ ! `git branch --list _${repo_name}` ]; then
         # Create a local branch mirroring our remote, prefixed with an _
@@ -129,7 +129,7 @@ for workspace in  ${1+"$@"}; do
 
     # Now reset our tracking branch to the latest commit we've (just) cherry picked
     git checkout --quiet "_${repo_name}"
-    git reset --hard "${repo_name}/master"
+    git reset --quiet --hard "${repo_name}/master"
     git checkout --quiet master
 done
 
@@ -147,5 +147,5 @@ if [ "$GIT_REMOTE" != "" ]; then
     git remote rm origin 2>/dev/null || true
     git remote add origin "$GIT_REMOTE"
 
-    git push -f origin master
+    git push --quiet -f origin master
 fi
