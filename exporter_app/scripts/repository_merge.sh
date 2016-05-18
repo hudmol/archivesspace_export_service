@@ -58,7 +58,7 @@ if [ -e "$REPO_SNAPSHOT_FILE" ]; then
     git cherry-pick --abort 2>/dev/null || true
 
     # Clear any existing branches
-    git checkout master
+    git checkout --quiet master
     git for-each-ref --format='%(refname)' 'refs/heads/_*' | while read branch_ref; do
                                                                  branch=$(echo "$branch_ref" | sed 's/^.*\///')
                                                                  git branch -D "$branch"
@@ -69,10 +69,10 @@ if [ -e "$REPO_SNAPSHOT_FILE" ]; then
                                     branch=$(echo "$branch_ref" | sed 's/^.*\///')
 
                                     if [ "$branch" = "master" ]; then
-                                        git checkout master
+                                        git checkout --quiet master
                                         git reset --hard "$commit"
                                     else
-                                        git checkout -b "$branch" "$commit"
+                                        git checkout --quiet -b "$branch" "$commit"
                                     fi
                                 done
 
@@ -113,7 +113,7 @@ for workspace in  ${1+"$@"}; do
 
         target_commit=$(git rev-list --reverse "$repo_name/master" | sed -n 1p)
 
-        git checkout -b "_${repo_name}" "$target_commit"
+        git checkout --quiet -b "_${repo_name}" "$target_commit"
         echo "done"
     fi
 
@@ -121,16 +121,16 @@ for workspace in  ${1+"$@"}; do
     # this repository.  We'll use that branch to track our state.
 
     # Cherry pick the commits we need--anything added to master since our last pull
-    git checkout master
+    git checkout --quiet master
 
     if [ "`git rev-list --reverse "_${repo_name}".."${repo_name}/master"`" ]; then
         git rev-list --reverse "_${repo_name}".."${repo_name}/master" | xargs git cherry-pick
     fi
 
     # Now reset our tracking branch to the latest commit we've (just) cherry picked
-    git checkout "_${repo_name}"
+    git checkout --quiet "_${repo_name}"
     git reset --hard "${repo_name}/master"
-    git checkout master
+    git checkout --quiet master
 done
 
 # Fully consistent again
