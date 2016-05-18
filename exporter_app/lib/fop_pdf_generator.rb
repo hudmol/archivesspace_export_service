@@ -22,6 +22,11 @@ class FopPdfGenerator < HookInterface
       pdf_file = File.join(full_export_path, "#{identifier}.pdf")
       pdf_tmp_file = "#{pdf_file}.tmp"
 
+      if File.exist?(pdf_file) && File.mtime(ead_file) < File.mtime(pdf_file)
+        # PDF doesn't need updating
+        next
+      end
+
       XSLTProcessor.new(@xslt_file).transform(identifier, ead_file, fop_file)
 
       output_stream = java.io.FileOutputStream.new(pdf_tmp_file)
