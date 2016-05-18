@@ -13,7 +13,10 @@ class FopPdfGenerator < HookInterface
 
     full_export_path = File.join(export_directory, subdirectory)
 
-    ead_files(full_export_path).each do |ead_file|
+    json_files(full_export_path).each do |json_file|
+      json = JSON.parse(File.read(json_file))
+
+      ead_file =  File.join(full_export_path, json.fetch('ead_file'))
       identifier = File.basename(ead_file, '.*')
       fop_file = File.join(full_export_path, "#{identifier}.fop")
       pdf_file = File.join(full_export_path, "#{identifier}.pdf")
@@ -29,6 +32,12 @@ class FopPdfGenerator < HookInterface
         fopfac = org.apache.fop.apps.FopFactory.newInstance
         fopfac.setBaseURL(File.dirname(@xslt_file))
         fop = fopfac.newFop(org.apache.fop.apps.MimeConstants::MIME_PDF, output_stream)
+
+        agent = org.apache.fop.apps.FOUserAgent.new(fopfac)
+        agent.setTitle(json.fetch('title'))
+        agent.setCreationDate(File.mtime(ead_file).to_java(java.util.Date))
+
+        fop = fopfac.newFop(org.apache.fop.apps.MimeConstants::MIME_PDF, agent, output_stream)
         transformer = javax.xml.transform.TransformerFactory.newInstance.newTransformer
         res = javax.xml.transform.sax.SAXResult.new(fop.getDefaultHandler)
         transformer.transform(javax.xml.transform.stream.StreamSource.new(input_stream), res)
@@ -41,7 +50,7 @@ class FopPdfGenerator < HookInterface
     end
   end
 
-  def ead_files(path)
-    Dir.glob(File.join(path, "*.xml"))
+  def json_files(path)
+    Dir.glob(File.join(path, "*.json"))
   end
 end
