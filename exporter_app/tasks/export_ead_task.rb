@@ -10,6 +10,10 @@ require_relative 'lib/archivesspace_client'
 
 class ExportEADTask < TaskInterface
 
+  # Adjust our timestamps to avoid time differences between servers, delays
+  # between transactions committing and becoming apparent, etc.
+  READ_MARGIN_SECONDS = 120
+
   EXPORTED_DIR = 'exported'
 
   def initialize(task_params, job_identifier, workspace_base)
@@ -40,6 +44,10 @@ class ExportEADTask < TaskInterface
     @last_start_time = Time.now
     last_read_time = @work_queue.get_int_status("last_read_time") { 0 }
     @log.debug("Last read time: #{last_read_time}")
+
+    if last_read_time > 0
+      last_read_time -= READ_MARGIN_SECONDS
+    end
 
     updates = @as_client.updates_since(last_read_time, sanitized_search_options)
     @log.debug("Updates from ArchivesSpace: #{updates}")
