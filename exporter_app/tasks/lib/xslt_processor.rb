@@ -7,7 +7,7 @@ class XSLTProcessor
   end
 
   def initialize(xslt_source)
-    factory = javax.xml.transform.TransformerFactory.new_instance("net.sf.saxon.TransformerFactoryImpl", nil);
+    factory = javax.xml.transform.TransformerFactory.new_instance("net.sf.saxon.TransformerFactoryImpl", nil)
 
     begin
       @transformer = factory.new_transformer(source_for(xslt_source))

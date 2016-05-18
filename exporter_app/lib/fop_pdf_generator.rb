@@ -27,7 +27,7 @@ class FopPdfGenerator < HookInterface
         input_stream = java.io.FileInputStream.new(fop_file)
 
         fopfac = org.apache.fop.apps.FopFactory.newInstance
-        fopfac.setBaseURL( File.dirname(@xslt_file) )
+        fopfac.setBaseURL(File.dirname(@xslt_file))
         fop = fopfac.newFop(org.apache.fop.apps.MimeConstants::MIME_PDF, output_stream)
         transformer = javax.xml.transform.TransformerFactory.newInstance.newTransformer
         res = javax.xml.transform.sax.SAXResult.new(fop.getDefaultHandler)
