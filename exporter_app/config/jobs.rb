@@ -21,8 +21,9 @@
                        :numbered_cs => false
                      },
 
-                     :validation_schema => ['config/ead.xsd'],
                      :xslt_transforms => ['config/transform.xslt'],
+                     :validation_schema => ['config/ead.xsd'],
+                     :schematron_checks => ['config/schematron.sch'],
                    },
 
                    :before_hooks => [

@@ -1,13 +1,15 @@
 class XMLException < StandardError
-  def initialize(msg, cause)
-    msg = (msg +
-           "\n" +
-           ("=" * 72) +
-           "\n" +
-           cause.class.to_s + ': ' + cause.message +
-           "\n" +
-           ("=" * 72) +
-           "\n")
+  def initialize(msg, cause = nil)
+    if cause
+      msg = (msg +
+             "\n" +
+             ("=" * 72) +
+             "\n")
+
+      msg += cause.class.to_s + ': ' + cause.message + "\n"
+
+      msg += ("=" * 72) + "\n"
+    end
 
     super(msg)
     @cause = cause

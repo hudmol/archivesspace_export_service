@@ -3,6 +3,7 @@ require 'json'
 require_relative 'task_interface'
 require_relative 'lib/xml_cleaner'
 require_relative 'lib/xsd_validator'
+require_relative 'lib/schematron_validator'
 require_relative 'lib/xslt_processor'
 require_relative 'lib/sqlite_work_queue'
 require_relative 'lib/archivesspace_client'
@@ -23,6 +24,8 @@ class ExportEADTask < TaskInterface
     @as_client = ArchivesSpaceClient.new(config[:aspace_backend_url], config[:aspace_username], config[:aspace_password])
 
     @validation_schema = task_params.fetch(:validation_schema, [])
+    @schematron_checks = task_params.fetch(:schematron_checks, [])
+
     @xslt_transforms = task_params.fetch(:xslt_transforms, [])
 
     @search_options = task_params.fetch(:search_options)
@@ -204,6 +207,11 @@ class ExportEADTask < TaskInterface
     @validation_schema.each do |schema_file|
       XSDValidator.new(schema_file).validate(identifier, file_to_validate)
     end
+
+    @schematron_checks.each do |schematron_file|
+      SchematronValidator.new(schematron_file).validate(identifier, file_to_validate)
+    end
+
   end
 
   def run_xslt_transforms(identifier, tempfile)
