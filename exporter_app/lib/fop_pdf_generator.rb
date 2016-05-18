@@ -34,17 +34,17 @@ class FopPdfGenerator < HookInterface
       begin
         input_stream = java.io.FileInputStream.new(fop_file)
 
-        fopfac = org.apache.fop.apps.FopFactory.newInstance
-        fopfac.setBaseURL("file://#{File.dirname(@xslt_file)}")
-        fopFactory.setFontBaseURL("file://#{ExporterApp.base_dir('config/fonts')}")
+        fop_factory = org.apache.fop.apps.FopFactory.newInstance
+        fop_factory.setBaseURL("file://#{File.dirname(@xslt_file)}")
+        fop_factory.setFontBaseURL("file://#{ExporterApp.base_dir('config/fonts')}")
 
-        fop = fopfac.newFop(org.apache.fop.apps.MimeConstants::MIME_PDF, output_stream)
+        fop = fop_factory.newFop(org.apache.fop.apps.MimeConstants::MIME_PDF, output_stream)
 
-        agent = org.apache.fop.apps.FOUserAgent.new(fopfac)
+        agent = org.apache.fop.apps.FOUserAgent.new(fop_factory)
         agent.setTitle(json.fetch('title'))
         agent.setCreationDate(File.mtime(ead_file).to_java(java.util.Date))
 
-        fop = fopfac.newFop(org.apache.fop.apps.MimeConstants::MIME_PDF, agent, output_stream)
+        fop = fop_factory.newFop(org.apache.fop.apps.MimeConstants::MIME_PDF, agent, output_stream)
         transformer = javax.xml.transform.TransformerFactory.newInstance.newTransformer
         res = javax.xml.transform.sax.SAXResult.new(fop.getDefaultHandler)
         transformer.transform(javax.xml.transform.stream.StreamSource.new(input_stream), res)
