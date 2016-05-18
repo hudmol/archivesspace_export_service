@@ -1,6 +1,6 @@
 # Manifest
 
-EAD | EAD ID | Identifier | Title
---- | ------ | ---------- | -----
-<% @data.each do |json| %>[<%= json['ead_file'] %>](./<%= json['ead_file'] %>) | <%= json['ead_id'] %> | <%= json['identifier'] %> | <%= json['title'] %>
+EAD | EAD ID | Identifier | Title | Other versions
+--- | ------ | ---------- | ----- | --------------
+<% @data.each do |json| %> [<%= json['ead_file'] %>](<%= json['ead_file'] %>) | <%= json['ead_id'] %> | <%= json['identifier'] %> | <%= json['title'] %> | <% json['other_versions'].each_with_index do |(filename, label), idx| %> <% if idx > 0 %>, <% end %> [<%= label %>](<%= filename %>) <% end %>
 <% end %>
