@@ -2,15 +2,19 @@ class ProcessManager
 
   def initialize
     @processes_by_job = {}
+    @log = ExporterApp.log_for("ProcessManager")
+    @log.debug("Initialized")
   end
 
   def start_job(job, completed_callback)
+    @log.debug("Starting job #{job}")
     process = Process.new(job, completed_callback)
     @processes_by_job[job] = process
     process.call
   end
 
   def shutdown
+    @log.info("Shutting down")
     @processes_by_job.each do |job, process|
       process.terminate!
     end
@@ -35,13 +39,16 @@ class ProcessManager
           @log.info("Running")
           status = JobStatus::COMPLETED
 
+          @log.debug("Running before hooks")
           @job.before_hooks.each do |hook|
             hook.call(@job.task)
           end
 
           begin
+            @log.debug("Running main task")
             @job.task.call(self)
 
+            @log.debug("Running after hooks")
             @job.after_hooks.each do |hook|
               hook.call(@job.task)
             end
@@ -72,6 +79,7 @@ class ProcessManager
     end
 
     def terminate!
+      @log.info("I've been terminated :(")
       @should_terminate.set(true)
       @thread.join unless @thread == :worker_not_started
     end

@@ -72,9 +72,9 @@ class JobStateStorage
       end
     end
 
-    puts ("=== Job states ===\n" +
-          result.map(&:to_s).join("\n") +
-          "\n=== End job states ===")
+    ("=== Job states ===\n" +
+     result.map(&:to_s).join("\n") +
+     "\n=== End job states ===")
   end
 
   private

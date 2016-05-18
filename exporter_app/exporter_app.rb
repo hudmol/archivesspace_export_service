@@ -12,7 +12,7 @@ class ExporterApp
     end
 
     @log_manager = LogManager.new
-    log = log_for('APP')
+    log = log_for('ExporterApp')
     log.info("*** Exporter Application started ***")
 
     job_definitions = JobDefinitions.from_config(base_dir("config/jobs.rb"))
@@ -25,27 +25,28 @@ class ExporterApp
 
     # Start the application's scheduling loop
     while true
+      log.debug("Top of scheduling loop")
       job_definitions.each do |job|
+        log.debug("Checking #{job}")
         now = Time.now
 
         last_run_info = job_state_storage.last_run_of(job)
 
         if job.should_run?(now, last_run_info) && !last_run_info.running?
-          puts "Running #{job}!"
+          log.info("Starting #{job}")
           # Start the job!
           job_state_storage.job_started(job)
           process_manager.start_job(job, proc { |job, status|
-                                      # THINKME: This needs to be thread-safe
                                       job_state_storage.job_completed(job, status)
-                                      job_state_storage.dump
+                                      log.debug(job_state_storage.dump)
                                     })
 
         else
-          puts "Not time to run #{job}"
+          log.debug("Not time to run #{job}")
         end
       end
 
-      puts "Sleeping #{POLL_INTERVAL} seconds"
+      log.debug("Sleeping #{POLL_INTERVAL} seconds")
       sleep POLL_INTERVAL
     end
 
