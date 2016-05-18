@@ -4,7 +4,7 @@ require_relative 'hook_interface'
 class FopPdfGenerator < HookInterface
 
   def initialize(xslt_file)
-    @xslt_file = xslt_file
+    @xslt_file = File.absolute_path(xslt_file)
   end
 
   def call(task)
@@ -30,7 +30,9 @@ class FopPdfGenerator < HookInterface
         input_stream = java.io.FileInputStream.new(fop_file)
 
         fopfac = org.apache.fop.apps.FopFactory.newInstance
-        fopfac.setBaseURL(File.dirname(@xslt_file))
+        fopfac.setBaseURL("file://#{File.dirname(@xslt_file)}")
+        fopFactory.setFontBaseURL("file://#{ExporterApp.base_dir('config/fonts')}")
+
         fop = fopfac.newFop(org.apache.fop.apps.MimeConstants::MIME_PDF, output_stream)
 
         agent = org.apache.fop.apps.FOUserAgent.new(fopfac)
