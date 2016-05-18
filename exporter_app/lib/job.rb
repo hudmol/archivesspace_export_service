@@ -17,7 +17,7 @@ class Job
   end
 
   def task
-    @task.new(@task_params, @id, @workspace_base)
+    @task_instance ||= @task.new(@task_params, @id, @workspace_base)
   end
 
   def within_window?(time)
