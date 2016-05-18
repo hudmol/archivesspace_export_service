@@ -273,7 +273,7 @@
     -->
     <xsl:template name="icon">
         <fo:block text-align="left" margin-left="-.75in" margin-top="-.5in">
-            <fo:external-graphic src="archivesspace.small.png" content-height="75%" content-width="75%"/>
+            <fo:external-graphic src="config/logo.png" content-height="75%" content-width="75%"/>
         </fo:block>
     </xsl:template>
 
