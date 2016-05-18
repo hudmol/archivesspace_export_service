@@ -95,12 +95,8 @@ class ExportEADTask < TaskInterface
   def load_into_work_queue(updates)
     @log.debug("Loading updates into work queue")
     updates['adds'].each do |add|
-      @work_queue.push('add', add['id'], {
-                         'title' => add['title'],
-                         'identifier' => add['identifier'].to_json,
-                         'repo_id' => add['repo_id'],
-                         'uri' => add['uri'],
-                       })
+      @work_queue.push('add', add['id'],
+                       add.merge('identifier' => add['identifier'].to_json))
     end
 
     # James says that I'll never need the format of the remove list to be the
