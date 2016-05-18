@@ -4,16 +4,19 @@ class SleepTask
 
   def initialize(params)
     @params = params
+
+    @log = ExporterApp.log_for("SleepyHead")
+    @log.info("SleepTask initialized")
   end
 
   def call(process)
     5.times do
       if !process.running?
-        $stderr.puts "Job stopped! #{Thread.current}"
+        @log.error("Job stopped! #{Thread.current}")
         break
       end
 
-      puts "Loop"
+      @log.debug("Loop")
       sleep 1
     end
   end
