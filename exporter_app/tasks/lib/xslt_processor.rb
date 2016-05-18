@@ -17,12 +17,11 @@ class XSLTProcessor
   end
 
   def transform(identifier, input_file, output_file)
-    begin
-      temp_output = "#{output_file}.tmp"
+    temp_output = "#{output_file}.tmp"
 
+    begin
       @transformer.transform(javax.xml.transform.stream.StreamSource.new(java.io.File.new(input_file)),
                              javax.xml.transform.stream.StreamResult.new(java.io.File.new(temp_output)))
-
     rescue
       File.delete(temp_output) rescue nil
       raise TransformError.new("XSLT transform failed for record #{identifier}", $!)
