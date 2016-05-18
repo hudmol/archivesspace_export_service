@@ -12,4 +12,8 @@ class TaskInterface
     raise NotImplementedError.new("Subclass must implement this")
   end
 
+  def completed!
+    # Optional...
+  end
+
 end

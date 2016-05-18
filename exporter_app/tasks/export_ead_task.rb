@@ -28,12 +28,14 @@ class ExportEADTask < TaskInterface
     @search_options = task_params.fetch(:search_options)
     @export_options = task_params.fetch(:export_options)
 
+    @last_start_time = nil
+
     @log = ExporterApp.log_for(job_identifier)
     @log.info("ExportEADTask initialized")
   end
 
   def call(process)
-    now = Time.now
+    @last_start_time = Time.now
     last_read_time = @work_queue.get_int_status("last_read_time") { 0 }
     @log.debug("Last read time: #{last_read_time}")
 
@@ -71,7 +73,11 @@ class ExportEADTask < TaskInterface
       @log.info("Work queue completed!")
     end
 
-    @work_queue.put_int_status("last_read_time", now.to_i)
+  end
+
+  def completed!
+    # Record a successful run
+    @work_queue.put_int_status("last_read_time", @last_start_time.to_i)
   end
 
   def exported_variables

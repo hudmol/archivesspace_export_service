@@ -52,6 +52,8 @@ class ProcessManager
             @job.after_hooks.each do |hook|
               hook.call(@job.task)
             end
+
+            @job.task.completed!
           rescue
             @log.error($!)
             @log.error($@.join("\n"))
