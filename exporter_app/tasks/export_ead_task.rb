@@ -61,7 +61,7 @@ class ExportEADTask < TaskInterface
         end
       elsif item[:action] == 'remove'
         @log.debug("Removing EAD and manifest for #{item}")
-        remove_ead_and_manifest(item[:resource_id])
+        remove_associated_files(item[:resource_id])
       else
         @log.error("Unknown action for item: #{item}")
       end
@@ -188,9 +188,10 @@ class ExportEADTask < TaskInterface
     @log.debug("Manifest json created for #{item[:uri]}")
   end
 
-  def remove_ead_and_manifest(id)
-    [path_for_export_file(id, 'xml'), path_for_export_file("#{id}", 'json')].each do |file|
+  def remove_associated_files(id)
+    Dir.glob(path_for_export_file(id, '*')).each do |file|
       begin
+        @log.debug("Removing deleted file: #{file}")
         File.delete(file)
       rescue Errno::ENOENT
         # so it's not there, that's cool
