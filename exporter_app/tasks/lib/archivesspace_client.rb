@@ -1,4 +1,5 @@
 require 'net/http'
+require 'net/https'
 require 'json'
 
 class ArchivesSpaceClient
@@ -25,8 +26,20 @@ class ArchivesSpaceClient
     json_post("/users/#{@username}/login", :password => @password, :expiring => false)['session']
   end
 
-  def json_post(uri, params)
-    response = Net::HTTP.post_form(URI.join(@aspace_backend_url, uri), params)
+  def json_post(path, params)
+    uri = URI.join(@aspace_backend_url, path)
+
+    request = Net::HTTP::Post.new(uri)
+    request.form_data = params
+
+    http = Net::HTTP.new(uri.host, uri.port)
+
+    if uri.scheme == 'https'
+      http.use_ssl = true
+      http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+    end
+
+    response = http.start {|http| http.request(request) }
 
     if response.code != '200'
       raise "#{response.code}: #{response.body}"
@@ -35,18 +48,23 @@ class ArchivesSpaceClient
     JSON(response.body)
   end
 
-  def get(uri, params)
+  def get(path, params)
     @session = login unless @session
 
-    uri = URI.join(@aspace_backend_url, uri)
+    uri = URI.join(@aspace_backend_url, path)
     uri.query = URI.encode_www_form(params)
+
+    http = Net::HTTP.new(uri.host, uri.port)
+
+    if uri.scheme == 'https'
+      http.use_ssl = true
+      http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+    end
 
     request = Net::HTTP::Get.new(uri)
     request['X-ArchivesSpace-Session'] = @session
 
-    response = Net::HTTP.start(uri.hostname, uri.port) {|http|
-      http.request(request)
-    }
+    response = http.start {|http| http.request(request) }
 
     if response.code != '200'
       raise "#{response.code}: #{response.body}"
