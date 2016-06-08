@@ -6,6 +6,7 @@ class ArchivesSpaceClient
 
   def initialize(aspace_backend_url, username, password)
     @aspace_backend_url = aspace_backend_url
+    @aspace_backend_path = "#{URI(@aspace_backend_url).path}/".gsub(/\/+$/,"/")
     @username = username
     @password = password
 
@@ -27,7 +28,7 @@ class ArchivesSpaceClient
   end
 
   def json_post(path, params)
-    uri = URI.join(@aspace_backend_url, path)
+    uri = URI.join(@aspace_backend_url, @aspace_backend_path, path.gsub(/^\//,""))
 
     request = Net::HTTP::Post.new(uri)
     request.form_data = params
@@ -51,7 +52,7 @@ class ArchivesSpaceClient
   def get(path, params)
     @session = login unless @session
 
-    uri = URI.join(@aspace_backend_url, path)
+    uri = URI.join(@aspace_backend_url, @aspace_backend_path, path.gsub(/^\//,""))
     uri.query = URI.encode_www_form(params)
 
     http = Net::HTTP.new(uri.host, uri.port)
