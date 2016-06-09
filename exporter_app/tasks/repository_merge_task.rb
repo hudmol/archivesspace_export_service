@@ -1,4 +1,5 @@
 require 'fileutils'
+require_relative 'task_interface'
 
 class RepositoryMergeTask < TaskInterface
 
