@@ -7,6 +7,7 @@ require_relative 'lib/schematron_validator'
 require_relative 'lib/xslt_processor'
 require_relative 'lib/sqlite_work_queue'
 require_relative 'lib/archivesspace_client'
+require_relative 'lib/validation_failed_exception'
 
 class ExportEADTask < TaskInterface
 
@@ -59,13 +60,8 @@ class ExportEADTask < TaskInterface
         begin
           download_ead(item)
           create_manifest_json(item)
-        rescue XSDValidator::ValidationFailedException => e
-          @log.error("EAD validation failed for record #{item[:uri]} with the following error:")
-          @log.error(e)
-
-          # THINKME: At the moment we just log this warning and skip over the
-          # record, never to be exported again until next changed in
-          # ArchivesSpace.
+        rescue ValidationFailedException => e
+          # Skip this record and continue the jobs
         end
       elsif item[:action] == 'remove'
         @log.debug("Removing EAD and manifest for #{item}")
@@ -167,8 +163,10 @@ class ExportEADTask < TaskInterface
     begin
       @log.debug("Validating EAD for #{item[:uri]}")
       validate_ead!(item[:identifier], tempfile)
-    rescue
-      @log.debug("EAD validation failed for #{item[:uri]}, tidying up")
+    rescue ValidationFailedException => e
+      @log.error("EAD validation failed for #{item[:uri]}.  Skipping this record")
+      @log.error("Validation error was: #{e}")
+
       File.delete(tempfile)
       raise $!
     end
@@ -215,7 +213,6 @@ class ExportEADTask < TaskInterface
     @schematron_checks.each do |schematron_file|
       SchematronValidator.new(schematron_file).validate(identifier, file_to_validate)
     end
-
   end
 
   def run_xslt_transforms(identifier, tempfile)
