@@ -17,6 +17,9 @@ class ExportEADTask < TaskInterface
 
   EXPORTED_DIR = 'exported'
 
+  class SkipRecordException < StandardError
+  end
+
   def initialize(task_params, job_identifier, workspace_base)
     @workspace_directory = workspace_base
     @export_directory = File.join(workspace_base, EXPORTED_DIR)
@@ -60,7 +63,7 @@ class ExportEADTask < TaskInterface
         begin
           download_ead(item)
           create_manifest_json(item)
-        rescue ValidationFailedException => e
+        rescue SkipRecordException
           # Skip this record and continue the jobs
         end
       elsif item[:action] == 'remove'
@@ -147,9 +150,14 @@ class ExportEADTask < TaskInterface
     end
 
     @log.debug("Cleaning XML for #{item[:uri]}")
-    # Make sure we don't have any stray namespaces that will trip up the
-    # subsequent validations/transformations.
-    XMLCleaner.new.clean(tempfile)
+    begin
+      # Make sure we don't have any stray namespaces that will trip up the
+      # subsequent validations/transformations.
+      XMLCleaner.new.clean(tempfile)
+    rescue
+      @log.error("XML cleaning failed: #{$!}.  Skipping this record")
+      raise SkipRecordException.new
+    end
 
     begin
       @log.debug("Running XSLT for #{item[:uri]}")
@@ -168,7 +176,7 @@ class ExportEADTask < TaskInterface
       @log.error("Validation error was: #{e}")
 
       File.delete(tempfile)
-      raise $!
+      raise SkipRecordException.new
     end
 
     File.rename(tempfile, outfile)

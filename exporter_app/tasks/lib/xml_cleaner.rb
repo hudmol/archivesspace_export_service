@@ -27,6 +27,8 @@ class XMLCleaner
         @log.info("Corrected error in XML markup.  Parsing again (attempt: #{attempt}).")
         retry
       end
+    rescue
+      raise "Failed to clean XML: #{$!}"
     end
   end
 
