@@ -1,12 +1,10 @@
 require 'tempfile'
 require_relative 'task_utils'
-require_relative 'xml_exception'
 require_relative 'xslt_processor'
+require_relative 'validation_failed_exception'
+
 
 class SchematronValidator
-
-  class ValidationFailedException < XMLException
-  end
 
   def initialize(schema_file)
     @log = ExporterApp.log_for(self.class.to_s)
