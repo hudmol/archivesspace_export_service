@@ -100,13 +100,13 @@ for workspace in  ${1+"$@"}; do
     git remote add "$repo_name" "$repo_path" 2>/dev/null || true
     git fetch --quiet "$repo_name"
 
-    if [ ! `git branch --list _${repo_name}` ]; then
+    if [ "`git branch | grep "_${repo_name}\$"`" = "" ]; then
         # Create a local branch mirroring our remote, prefixed with an _
         #
         # Initially we'll start this off on the first commit for the
         # branch, which will be an empty "initial import" one anyway.
 
-        if [ ! `git branch --remote --list "$repo_name/master"` ]; then
+        if [ "`git branch -r | grep "${repo_name}/master"`" = "" ]; then
             echo "Branch $repo_name/master is not ready yet"
             continue
         fi
