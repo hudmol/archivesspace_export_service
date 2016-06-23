@@ -33,9 +33,10 @@ class ProcessManager
 
     def call
       @thread = Thread.new do
+        log = ExporterApp.log_for
+
         begin
           Thread.current['name'] = "Job #{@job.id} (#{@job.task.class}) - #{Thread.current.object_id}"
-          log = ExporterApp.log_for
 
           log.info("Running")
           status = JobStatus::COMPLETED
