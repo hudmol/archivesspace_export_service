@@ -81,6 +81,14 @@
                    :task_parameters => {
                      :jobs_to_merge => ['ead', 'plaintext'],
 
+                     # Here you can provide a list of additional directories
+                     # whose files we be included at the top-level of the final
+                     # Git repository.  Just create a subdirectory under
+                     # `config` containing your files, and reference them as
+                     # 'config/my_new_subdirectory'.
+                     #
+                     :include_additional_files_from => ['config/readme_and_license'],
+
                      # You can use a URL with an embedded username or password like this
                      :git_remote => 'https://yourusername:yourpassword@github.com/yourusername/yourrepo.git',
 

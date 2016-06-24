@@ -137,6 +137,31 @@ done
 rm -f "$REPO_SNAPSHOT_FILE"
 
 
+# Copy any additional readme/licenses into the top-level and commit
+# those if needed
+if [ "$ADDITIONAL_FILE_PATHS" != "" ]; then
+    (
+        # Use a custom field separator so we don't choke on spaces
+        IFS=""
+
+        # And turn globbing back on for our copy
+        set +f
+
+        for path in $ADDITIONAL_FILE_PATHS; do
+            if [ "$path" != "" ]; then
+                cp -a "$path"/* .
+            fi
+        done
+
+        git add -A .
+
+        # There'll usually be nothing to commit here, so don't fail if
+        # the commit command does
+        git commit -m "Update additional repository files" || true
+    )
+fi
+
+
 if [ "$SSH_WRAPPER" != "" ]; then
     export GIT_SSH="$SSH_WRAPPER"
 fi
