@@ -62,7 +62,6 @@ class ArchivesSpaceClient
 
     if uri.scheme == 'https'
       http.use_ssl = true
-      http.verify_mode = OpenSSL::SSL::VERIFY_NONE
     end
 
     request = Net::HTTP::Get.new(uri)
