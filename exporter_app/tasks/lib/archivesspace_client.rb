@@ -57,6 +57,9 @@ class ArchivesSpaceClient
 
     http = Net::HTTP.new(uri.host, uri.port)
 
+    http.read_timeout = 600
+    http.open_timeout = 600
+
     if uri.scheme == 'https'
       http.use_ssl = true
       http.verify_mode = OpenSSL::SSL::VERIFY_NONE
