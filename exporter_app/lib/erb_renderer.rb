@@ -49,6 +49,8 @@ class ErbRenderer < HookInterface
       record_json['other_versions'] ||= {}
 
       Dir.glob(File.join(path, "#{record_json.fetch('resource_db_id')}.*")).each do |file_version|
+        next if file_version.downcase.end_with?(".tmp")
+
         name = File.basename(file_version)
         if File.basename(file_version) != record_json['ead_file'] && name != File.basename(filename)
           label = File.extname(file_version) == "" ? name : File.extname(file_version).upcase[1..-1]
