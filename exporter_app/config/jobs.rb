@@ -9,6 +9,8 @@
 
                    :task => ExportEADTask,
                    :task_parameters => {
+                     # Force this job to create a git commit periodically
+                     :commit_every_n_records => 50,
                      :search_options => {
 #                       :repo_id => 2,
 #                       :identifier => 'AAA.02.G',
