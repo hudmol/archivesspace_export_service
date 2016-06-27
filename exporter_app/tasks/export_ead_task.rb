@@ -151,9 +151,21 @@ class ExportEADTask < TaskInterface
     tempfile = "#{outfile}.tmp"
 
     File.open(tempfile, 'w') do |io|
-      ead = @as_client.export(id, repo_id, @export_options)
+      retries_remaining = 2
 
-      io.write(ead)
+      begin
+        ead = @as_client.export(id, repo_id, @export_options)
+        io.write(ead)
+      rescue Timeout::Error
+        retries_remaining -= 1
+        if retries_remaining > 0
+          @log.info("Fetch for ID #{id} timed out.  Trying again!")
+          retry
+        else
+          @log.info("Record #{id} is still timing out after several retries.  Giving up!")
+          raise $!
+        end
+      end
     end
 
     @log.info("Cleaning XML for #{item[:uri]}")
