@@ -25,8 +25,17 @@ class SQLiteDB
 
   class Connection
     def initialize(jdbc_connection)
+      jdbc_connection.set_auto_commit(true)
       @jdbc_connection = jdbc_connection
       @log = ExporterApp.log_for(self.class.to_s)
+    end
+
+    def set_auto_commit(val)
+      @jdbc_connection.set_auto_commit(val)
+    end
+
+    def commit
+      @jdbc_connection.commit
     end
 
     def prepare(sql, arguments = [])
