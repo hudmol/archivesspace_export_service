@@ -67,12 +67,13 @@ class ExportEADTask < TaskInterface
           # Skip this record and continue the jobs
         end
       elsif item[:action] == 'remove'
-        @log.debug("Removing EAD and manifest for #{item}")
+        @log.info("Removing EAD and manifest for #{item}")
         remove_associated_files(item[:resource_id])
       else
         @log.error("Unknown action for item: #{item}")
       end
 
+      @log.debug("Record completed and removed from queue: #{item[:uri]}") if item[:uri]
       @work_queue.done(item)
     end
 
@@ -100,7 +101,7 @@ class ExportEADTask < TaskInterface
   private
 
   def load_into_work_queue(updates)
-    @log.debug("Loading updates into work queue")
+    @log.info("Loading updates into work queue")
     @work_queue.push('add',
                      updates['adds'].map {|record|
                        # We want to store identifiers as JSON strings, so fix
@@ -142,7 +143,7 @@ class ExportEADTask < TaskInterface
   end
 
   def download_ead(item)
-    @log.debug("Downloading EAD for #{item[:uri]}")
+    @log.info("Downloading EAD for #{item[:uri]}")
     id = item.fetch(:resource_id)
     repo_id = item.fetch(:repo_id)
 
@@ -155,7 +156,7 @@ class ExportEADTask < TaskInterface
       io.write(ead)
     end
 
-    @log.debug("Cleaning XML for #{item[:uri]}")
+    @log.info("Cleaning XML for #{item[:uri]}")
     begin
       # Make sure we don't have any stray namespaces that will trip up the
       # subsequent validations/transformations.
@@ -166,16 +167,16 @@ class ExportEADTask < TaskInterface
     end
 
     begin
-      @log.debug("Running XSLT for #{item[:uri]}")
+      @log.info("Running XSLT for #{item[:uri]}")
       run_xslt_transforms(item[:identifier], tempfile)
     rescue
-      @log.debug("XSLT failed for #{item[:uri]}, tidying up")
+      @log.info("XSLT failed for #{item[:uri]}, tidying up")
       File.delete(tempfile)
       raise $!
     end
 
     begin
-      @log.debug("Validating EAD for #{item[:uri]}")
+      @log.info("Validating EAD for #{item[:uri]}")
       validate_ead!(item[:identifier], tempfile)
     rescue ValidationFailedException => e
       @log.error("EAD validation failed for #{item[:uri]}.  Skipping this record")
@@ -186,11 +187,11 @@ class ExportEADTask < TaskInterface
     end
 
     File.rename(tempfile, outfile)
-    @log.debug("EAD download successful for #{item[:uri]}")
+    @log.info("EAD download successful for #{item[:uri]}")
   end
 
   def create_manifest_json(item)
-    @log.debug("Creating manifest json for #{item[:uri]}")
+    @log.info("Creating manifest json for #{item[:uri]}")
     outfile = path_for_export_file(item[:resource_id], 'json')
 
     File.open("#{outfile}.tmp", 'w') do |io|
@@ -205,13 +206,13 @@ class ExportEADTask < TaskInterface
     end
 
     File.rename("#{outfile}.tmp", outfile)
-    @log.debug("Manifest json created for #{item[:uri]}")
+    @log.info("Manifest json created for #{item[:uri]}")
   end
 
   def remove_associated_files(id)
     Dir.glob(path_for_export_file(id, '*')).each do |file|
       begin
-        @log.debug("Removing deleted file: #{file}")
+        @log.info("Removing deleted file: #{file}")
         File.delete(file)
       rescue Errno::ENOENT
         # so it's not there, that's cool
