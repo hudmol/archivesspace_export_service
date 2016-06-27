@@ -101,10 +101,12 @@ class ExportEADTask < TaskInterface
 
   def load_into_work_queue(updates)
     @log.debug("Loading updates into work queue")
-    updates['adds'].each do |add|
-      @work_queue.push('add', add['id'],
-                       add.merge('identifier' => add['identifier'].to_json))
-    end
+    @work_queue.push('add',
+                     updates['adds'].map {|record|
+                       # We want to store identifiers as JSON strings, so fix
+                       # them up here.
+                       record.merge('identifier' => record['identifier'].to_json)
+                     })
 
     # James says that I'll never need the format of the remove list to be the
     # same as the format of the add list, so the add list contains objects,
@@ -121,9 +123,13 @@ class ExportEADTask < TaskInterface
     #
     # -- Mark (Tuesday 3 May  10:26:28 AEST 2016)
     #
-    updates['removes'].each do |remove_id|
-      @work_queue.push('remove', remove_id)
-    end
+    # Apropos nothing in particular... if the remove list format had the same
+    # structure as the add list format, I wouldn't need to turn them into hashes
+    # myself below...
+    #
+    # -- Mark (Monday 27 June  15:49:39 AEST 2016)
+    @work_queue.push('remove',
+                     updates['removes'].map {|removed_id| {'id' => removed_id}})
 
     @work_queue.optimize
   end

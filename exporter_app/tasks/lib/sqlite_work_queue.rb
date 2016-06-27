@@ -15,18 +15,26 @@ class SQLiteWorkQueue
     create_tables
   end
 
-  def push(action, resource_id, extra_args = {})
+  def push(action, records)
     @db.with_connection do |conn|
-      # Reject any columns we weren't expecting
-      extra_args = extra_args.to_a.select {|k, _| EXTRA_COLUMNS.find {|col| col[:name] == k}}
+      conn.set_auto_commit(false)
 
-      extra_args_columns = extra_args.empty? ? '' : (', ' + extra_args.map(&:first).join(', '))
-      extra_args_placeholders = extra_args.empty? ? '' : (', ' + (['?'] * extra_args.length).join(', '))
+      records.each do |record|
+        resource_id = record.fetch('id')
 
-      conn.prepare("insert into work_queue (action, resource_id#{extra_args_columns}) values (?, ?#{extra_args_placeholders})",
-                   [action, resource_id, *extra_args.map {|arg| arg[1]}]) do |statement|
-        statement.execute_update
+        # Reject any columns we weren't expecting
+        extra_args = record.to_a.select {|k, _| EXTRA_COLUMNS.find {|col| col[:name] == k}}
+
+        extra_args_columns = extra_args.empty? ? '' : (', ' + extra_args.map(&:first).join(', '))
+        extra_args_placeholders = extra_args.empty? ? '' : (', ' + (['?'] * extra_args.length).join(', '))
+
+        conn.prepare("insert into work_queue (action, resource_id#{extra_args_columns}) values (?, ?#{extra_args_placeholders})",
+                     [action, resource_id, *extra_args.map {|arg| arg[1]}]) do |statement|
+          statement.execute_update
+        end
       end
+
+      conn.commit
     end
   end
 
