@@ -31,6 +31,9 @@ class ExportEADTask < TaskInterface
     config = ExporterApp.config
     @as_client = ArchivesSpaceClient.new(config[:aspace_backend_url], config[:aspace_username], config[:aspace_password])
 
+    @commit_every_n_records = task_params.fetch(:commit_every_n_records, nil)
+    @records_added = 0
+
     @validation_schema = task_params.fetch(:validation_schema, [])
     @schematron_checks = task_params.fetch(:schematron_checks, [])
 
@@ -58,7 +61,9 @@ class ExportEADTask < TaskInterface
 
     load_into_work_queue(updates)
 
-    while (still_running = process.running?) && (item = @work_queue.next)
+    @records_added = 0
+
+    while (still_running = process.running?) && !max_records_hit? && (item = @work_queue.next)
       if item[:action] == 'add'
         begin
           download_ead(item)
@@ -66,6 +71,7 @@ class ExportEADTask < TaskInterface
         rescue SkipRecordException
           # Skip this record and continue the jobs
         end
+        @records_added += 1
       elsif item[:action] == 'remove'
         @log.info("Removing EAD and manifest for #{item}")
         remove_associated_files(item[:resource_id])
@@ -99,6 +105,10 @@ class ExportEADTask < TaskInterface
   end
 
   private
+
+  def max_records_hit?
+    @commit_every_n_records && @records_added >= @commit_every_n_records
+  end
 
   def load_into_work_queue(updates)
     @log.info("Loading updates into work queue")
