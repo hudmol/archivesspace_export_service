@@ -11,14 +11,15 @@ if [ ! -d .git ]; then
 
    cat <<EOF > .gitignore
 *.tmp
+*.json
 EOF
 
    git add .gitignore
    git commit -m "Initial import"
 fi
 
-# Remove any temp files
-git clean -fdx
+# Remove any temp files (but keep the JSON files)
+git clean -fdx -e '*.json'
 
 # Roll back any uncommitted work
 git reset --hard
