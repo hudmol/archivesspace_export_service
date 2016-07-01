@@ -18,8 +18,9 @@ EOF
    git commit -m "Initial import"
 fi
 
-# Remove any temp files (but keep the JSON files)
-git clean -fdx -e '*.json'
+# Remove any untracked & temp files (but keep the JSON files)
+git clean -fd
+find . -name "*.tmp" -exec rm -f {} \;
 
 # Roll back any uncommitted work
 git reset --hard
