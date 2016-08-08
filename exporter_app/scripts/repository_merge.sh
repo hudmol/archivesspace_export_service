@@ -124,7 +124,7 @@ for workspace in  ${1+"$@"}; do
     git checkout --quiet master
 
     if [ "`git rev-list --reverse "_${repo_name}".."${repo_name}/master"`" ]; then
-        git rev-list --reverse "_${repo_name}".."${repo_name}/master" | xargs git cherry-pick
+        git rev-list --reverse "_${repo_name}".."${repo_name}/master" | xargs -n 1 git cherry-pick
     fi
 
     # Now reset our tracking branch to the latest commit we've (just) cherry picked
