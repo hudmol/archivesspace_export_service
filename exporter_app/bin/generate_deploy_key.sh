@@ -21,7 +21,7 @@ set -euf -o pipefail
 keysdir="$(dirname "$0")/../.keys"
 mkdir -p "$keysdir"
 
-ssh-keygen -t dsa -f "${keysdir}/${name}" -N ''
+ssh-keygen -t rsa -b 4096 -f "${keysdir}/${name}" -N ''
 
 echo
 echo "========================================================================"
