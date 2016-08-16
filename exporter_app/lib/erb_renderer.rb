@@ -41,20 +41,24 @@ class ErbRenderer < HookInterface
   def combined_json(path)
     json = []
 
-    json_files = File.join(path, "*.json")
+    json_files = File.join(path, "*/*.json")
 
-    Dir.glob(json_files) do |filename|
-      record_json = JSON.parse(File.read(filename))
+    Dir.glob(json_files) do |json_filename|
+      record_json = JSON.parse(File.read(json_filename))
 
       record_json['other_versions'] ||= {}
 
-      Dir.glob(File.join(path, "#{record_json.fetch('resource_db_id')}.*")).each do |file_version|
+      other_versions_glob = TaskUtils.replace_extension(json_filename, '*')
+
+      Dir.glob(other_versions_glob).each do |file_version|
         next if file_version.downcase.end_with?(".tmp")
 
         name = File.basename(file_version)
-        if File.basename(file_version) != record_json['ead_file'] && name != File.basename(filename)
+        # If we're not looking at the EAD or the JSON file...
+        if !['.json', '.xml'].include?(File.extname(file_version.downcase))
+          # Generate a label like "PDF" for this other file version
           label = File.extname(file_version) == "" ? name : File.extname(file_version).upcase[1..-1]
-          record_json['other_versions'][name] = label
+          record_json['other_versions'][TaskUtils.export_file_basename(file_version)] = label
         end
       end
 
