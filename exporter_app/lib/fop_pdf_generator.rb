@@ -12,19 +12,16 @@ class FopPdfGenerator < HookInterface
     export_directory = task.exported_variables.fetch(:export_directory)
     subdirectory = task.exported_variables.fetch(:subdirectory)
 
-    json_files_to_process = json_files(File.join(export_directory, subdirectory))
+    full_export_path = File.join(export_directory, subdirectory)
 
-    @log.info("PDF generating processing #{json_files_to_process.length} files")
-
-    json_files_to_process.each do |json_file|
+    json_files(full_export_path).each do |json_file|
       begin
         json = JSON.parse(File.read(json_file))
 
-        ead_file = TaskUtils.replace_extension(json_file, 'xml')
+        ead_file =  File.join(full_export_path, json.fetch('ead_file'))
         identifier = File.basename(ead_file, '.*')
-        fop_file = TaskUtils.replace_extension(json_file, 'fop')
-        pdf_file = TaskUtils.replace_extension(json_file, 'pdf')
-
+        fop_file = File.join(full_export_path, "#{identifier}.fop")
+        pdf_file = File.join(full_export_path, "#{identifier}.pdf")
         pdf_tmp_file = "#{pdf_file}.tmp"
 
         if File.exist?(pdf_file) && File.mtime(ead_file) < File.mtime(pdf_file)
@@ -72,7 +69,7 @@ class FopPdfGenerator < HookInterface
   end
 
   def json_files(path)
-    Dir.glob(File.join(path, "*/*.json"))
+    Dir.glob(File.join(path, "*.json"))
   end
 
   private

@@ -1,6 +1,5 @@
 require 'fileutils'
 require 'json'
-require 'digest/sha1'
 require_relative 'task_interface'
 require_relative 'lib/xml_cleaner'
 require_relative 'lib/xsd_validator'
@@ -148,20 +147,9 @@ class ExportEADTask < TaskInterface
 
   def path_for_export_file(basename, extension = 'xml')
     output_directory = File.join(@export_directory, @subdirectory)
-
-    # Github won't display more than 1000 files per directory, so bucket our
-    # files so we don't end up with too many.
-    prefix = generate_prefix(basename)
-
-    output_directory = File.join(output_directory, prefix)
-
     FileUtils.mkdir_p(output_directory)
 
     File.join(output_directory, "#{basename}.#{extension}")
-  end
-
-  def generate_prefix(id)
-    Digest::SHA1.hexdigest(id.to_s)[0..4]
   end
 
   def download_ead(item)
@@ -235,7 +223,7 @@ class ExportEADTask < TaskInterface
         :identifier => JSON.parse(item[:identifier]).compact.join("."),
         :uri => item[:uri],
         :title => item[:title],
-        :ead_file => TaskUtils.export_file_basename(path_for_export_file(item[:resource_id], 'xml')),
+        :ead_file => File.basename(path_for_export_file(item[:resource_id], 'xml')),
       }.to_json)
     end
 
