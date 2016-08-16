@@ -1,0 +1,12 @@
+Finding aid export from My Organization
+=======================================
+
+You can browse our finding aids by clicking the links below
+
+Identifier | Description
+---------- | ----------- |
+<% @jobs.each do |job_id| %>| [<%= job_id %>](<%= job_id %>/README.md) | <%= @job_descriptions.fetch(job_id, '') %> |
+<% end %>
+
+
+Please also see our [License](LICENSE.md)

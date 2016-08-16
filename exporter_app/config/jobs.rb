@@ -83,6 +83,11 @@
                    :task_parameters => {
                      :jobs_to_merge => ['ead', 'plaintext'],
 
+                     :job_descriptions => {
+                       'ead' => 'Finding aids in EAD (XML) format',
+                       'plaintext' => 'Finding aids in a compact plain text format',
+                     },
+
                      # Here you can provide a list of additional directories
                      # whose files we be included at the top-level of the final
                      # Git repository.  Just create a subdirectory under

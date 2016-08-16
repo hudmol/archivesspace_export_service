@@ -2,5 +2,5 @@
 
 EAD | EAD ID | Identifier | Title | Other versions
 --- | ------ | ---------- | ----- | --------------
-<% @data.each do |json| %> [<%= json['ead_file'] %>](<%= json['ead_file'] %>) | <%= json['ead_id'] %> | <%= json['identifier'] %> | <%= json['title'] %> | <% json['other_versions'].each_with_index do |(filename, label), idx| %> <% if idx > 0 %>, <% end %> [<%= label %>](<%= filename %>) <% end %>
+<% @data.each do |json| %> [<%= json['ead_id'] ? (json['ead_id'] + '.xml') : json['ead_file'] %>](<%= json['ead_file'] %>) | <%= json['ead_id'] %> | <%= json['identifier'] %> | <%= json['title'] %> | <% json['other_versions'].each_with_index do |(filename, label), idx| %> <% if idx > 0 %>, <% end %> [<%= label %>](<%= filename %>) <% end %>
 <% end %>
