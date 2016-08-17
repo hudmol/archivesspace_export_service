@@ -136,22 +136,14 @@ done
 # Fully consistent again
 rm -f "$REPO_SNAPSHOT_FILE"
 
-
 # Copy any additional readme/licenses into the top-level and commit
 # those if needed
-if [ "$ADDITIONAL_FILE_PATHS" != "" ]; then
+if [ "$ADDITIONAL_FILE_PATH" != "" ]; then
     (
-        # Use a custom field separator so we don't choke on spaces
-        IFS=""
-
-        # And turn globbing back on for our copy
+        # Turn globbing back on for our copy
         set +f
 
-        for path in $ADDITIONAL_FILE_PATHS; do
-            if [ "$path" != "" ]; then
-                cp -a "$path"/* .
-            fi
-        done
+        cp -a "$ADDITIONAL_FILE_PATH"/* .
 
         git add -A .
 
