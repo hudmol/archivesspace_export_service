@@ -23,7 +23,13 @@ mkdir -p "$keysdir"
 if [ "$JOB_IDENTIFIER" != "" ] && [ -e "${keysdir}/${JOB_IDENTIFIER}" ]; then
     keyfile_args="-i ${keysdir}/${JOB_IDENTIFIER}"
 else
-    keyfile_args=$(find "$keysdir" -type f | grep -v '\.pub$' | sed 's/^/-i /' | tr "\n" " ")
+    # Look for keys we've generated
+    local_keyfiles=$(find "$keysdir" -type f | grep -v '\.pub$' | sed 's/^/-i /' | tr "\n" " ")
+
+    # Plus any in the user's home directory
+    home_keyfiles=$(find "$HOME/.ssh" -type f | grep '\.pub$' | sed 's/^/-i /' | sed 's/\.pub//' | tr "\n" " ")
+
+    keyfile_args="${local_keyfiles} ${home_keyfiles}"
 fi
 
 # Invoke SSH with our generated keys explicitly requested
