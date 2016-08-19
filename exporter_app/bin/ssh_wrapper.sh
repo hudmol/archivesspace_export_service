@@ -27,7 +27,7 @@ else
     local_keyfiles=$(find "$keysdir" -type f | grep -v '\.pub$' | sed 's/^/-i /' | tr "\n" " ")
 
     # Plus any in the user's home directory
-    home_keyfiles=$(find "$HOME/.ssh" -type f | grep '\.pub$' | sed 's/^/-i /' | sed 's/\.pub//' | tr "\n" " ")
+    home_keyfiles=$(find "$HOME/.ssh" -type f 2>/dev/null | grep '\.pub$' | sed 's/^/-i /' | sed 's/\.pub//' | tr "\n" " ")
 
     keyfile_args="${local_keyfiles} ${home_keyfiles}"
 fi
