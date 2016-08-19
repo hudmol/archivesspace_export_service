@@ -6,6 +6,7 @@ require_relative 'task_interface'
 class RepositoryMergeTask < TaskInterface
 
   def initialize(task_params, job_identifier, workspace_base)
+    @job_identifier = job_identifier
     @workspace_directory = workspace_base
     @jobs_to_merge = task_params.fetch(:jobs_to_merge)
     @job_descriptions = task_params.fetch(:job_descriptions, {})
@@ -32,6 +33,7 @@ class RepositoryMergeTask < TaskInterface
 
   def exported_variables
     {
+      :job_identifier => @job_identifier,
       :workspace_directory => @workspace_directory,
       :exported_directory => ExportEADTask::EXPORTED_DIR,
       :additional_file_path => @additional_file_tmpdir,
