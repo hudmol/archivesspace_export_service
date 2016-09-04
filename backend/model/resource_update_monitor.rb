@@ -55,20 +55,33 @@ class ResourceUpdateMonitor
     adds = []
     removes = []
     mtime = Time.at(timestamp)
+
     DB.open do |db|
-      mods = db[:resource].where(Sequel.qualify(:resource, :system_mtime) > mtime)
+      mods = db[:resource]
+               .left_join(:archival_object, :archival_object__root_record_id => :resource__id)
+               .left_join(:instance) {
+                  { Sequel.qualify(:instance, :resource_id) => :resource__id } |
+                  { Sequel.qualify(:instance, :archival_object_id) => :archival_object__id }
+               }.left_join(:instance_do_link_rlshp, :instance_do_link_rlshp__instance_id => :instance__id)
+               .left_join(:digital_object, :digital_object__id => :instance_do_link_rlshp__digital_object_id)
+               .left_join(:digital_object_component, :digital_object_component__root_record_id => :digital_object__id)
+               .where { (Sequel.qualify(:resource, :system_mtime) > mtime) |
+                        (Sequel.qualify(:archival_object, :system_mtime) > mtime) |
+                        (Sequel.qualify(:digital_object, :system_mtime) > mtime) |
+                        (Sequel.qualify(:digital_object_component, :system_mtime) > mtime)
+               }
 
       if @repo_id
-        mods = mods.where(:repo_id => @repo_id)
+        mods = mods.where(:resource__repo_id => @repo_id)
       end
 
       if @start_id && !@end_id
-        mods = mods.where(:identifier => @start_id)
+        mods = mods.where(:resource__identifier => @start_id)
       end
 
-      mods = mods.select(:id, :title, :identifier, :ead_id, :repo_id, :publish, :suppressed)
+      mods = mods.select(:resource__id, :resource__title, :resource__identifier, :resource__ead_id, :resource__repo_id, :resource__publish, :resource__suppressed)
 
-      mods.each do |res|
+      mods.distinct.each do |res|
         if in_range(res)
           if res[:publish] == 1 && res[:suppressed] == 0
             adds << {
