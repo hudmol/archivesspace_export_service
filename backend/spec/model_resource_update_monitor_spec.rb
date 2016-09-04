@@ -116,4 +116,71 @@ describe 'Resource Update Monitor model' do
     monitor.updates_since(past)['adds'].length.should eq (1)
   end
 
+  describe "linked record updates" do
+
+    let!(:resource) { create_resource('publish' => true, 'id_0' => 'linky', 'id_1' => 'resource') }
+    let!(:subject) { create(:json_subject) }
+    let!(:agent) { create(:json_agent_person) }
+    let!(:digital_object) { create(:json_digital_object) }
+    let!(:digital_object_component) {
+      create(:json_digital_object_component,
+             :digital_object => {'ref' => digital_object.uri})
+    }
+
+    let!(:archival_object) {
+      create(:json_archival_object,
+             :title => "linked archival object",
+             :resource => {'ref' => resource.uri},
+             :subjects => [{'ref' => subject.uri}],
+             :instances => [build(:json_instance,
+                                  :digital_object => {'ref' => digital_object.uri})],
+             :linked_agents => [{'ref' => agent.uri, 'role' => 'creator'}])
+    }
+
+    let (:mtime) {
+      # Space out each test with sleeps to make sure each test runs at least 1
+      # second after the last one did something.
+      sleep 1
+      result = Time.now.to_i
+      sleep 1
+      result
+    }
+
+    it "reports updates for linked archival objects" do
+      monitor.updates_since(mtime)['adds'].should be_empty
+      archival_object.refetch
+      archival_object.save
+      monitor.updates_since(mtime)['adds'].should_not be_empty
+    end
+
+    it "reports updates for linked subjects" do
+      monitor.updates_since(mtime)['adds'].should be_empty
+      subject.refetch
+      subject.save
+      monitor.updates_since(mtime)['adds'].should_not be_empty
+    end
+
+    it "reports updates for linked agents" do
+      monitor.updates_since(mtime)['adds'].should be_empty
+      agent.refetch
+      agent.save
+      monitor.updates_since(mtime)['adds'].should_not be_empty
+    end
+
+    it "reports updates for linked digital objects" do
+      monitor.updates_since(mtime)['adds'].should be_empty
+      digital_object.refetch
+      digital_object.save
+      monitor.updates_since(mtime)['adds'].should_not be_empty
+    end
+
+    it "reports updates for linked digital object components" do
+      monitor.updates_since(mtime)['adds'].should be_empty
+      digital_object_component.refetch
+      digital_object_component.save
+      monitor.updates_since(mtime)['adds'].should_not be_empty
+    end
+
+  end
+
 end
