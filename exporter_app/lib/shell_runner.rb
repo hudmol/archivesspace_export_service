@@ -22,7 +22,7 @@ class ShellRunner < HookInterface
         readable.each do |fh|
           if fh == stderr
             fh.each do |line|
-              log.error(line.chomp)
+              log.info(line.chomp)
             end
           end
 
