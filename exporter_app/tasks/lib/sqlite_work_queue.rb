@@ -42,15 +42,19 @@ class SQLiteWorkQueue
     @db.with_connection do |conn|
       conn.prepare("select * from work_queue order by id limit 1") do |statement|
         rs = statement.execute_query
-        while rs.next
-          return {
-            :id => rs.get_int('id'),
-            :resource_id => rs.get_int('resource_id'),
-            :action => rs.get_string('action'),
-          }.merge(Hash[EXTRA_COLUMNS.map {|column|
-                         [column[:name].intern,
-                          rs.send(:"get#{column[:jdbctype].capitalize}", column[:name])]
-                       }])
+        begin
+          while rs.next
+            return {
+              :id => rs.get_int('id'),
+              :resource_id => rs.get_int('resource_id'),
+              :action => rs.get_string('action'),
+            }.merge(Hash[EXTRA_COLUMNS.map {|column|
+                           [column[:name].intern,
+                            rs.send(:"get#{column[:jdbctype].capitalize}", column[:name])]
+                         }])
+          end
+        ensure
+          rs.close if rs
         end
       end
     end
@@ -71,8 +75,12 @@ class SQLiteWorkQueue
       conn.prepare("select resource_id, identifier from work_queue") do |statement|
         rs = statement.execute_query
 
-        while rs.next
-          result << [rs.get_int(1), rs.get_string(2)]
+        begin
+          while rs.next
+            result << [rs.get_int(1), rs.get_string(2)]
+          end
+        ensure
+          rs.close if rs
         end
       end
     end
@@ -85,8 +93,12 @@ class SQLiteWorkQueue
       conn.prepare("select int_value from status where key = ?", [key]) do |statement|
         rs = statement.execute_query
 
-        while rs.next
-          return rs.get_int(1)
+        begin
+          while rs.next
+            return rs.get_int(1)
+          end
+        ensure
+          rs.close if rs
         end
       end
     end

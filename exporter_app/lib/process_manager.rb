@@ -36,7 +36,7 @@ class ProcessManager
         log = ExporterApp.log_for
 
         begin
-          Thread.current['name'] = "Job #{@job.id} (#{@job.task.class}) - #{Thread.current.object_id}"
+          Thread.current['name'] = "Job #{@job.id} (#{@job.task.class}) - #{Thread.current.to_s}@#{Thread.current.object_id}"
 
           log.info("Running")
           status = JobStatus::COMPLETED

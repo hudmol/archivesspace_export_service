@@ -13,6 +13,9 @@ class SQLiteDB
     begin
       FileUtils.mkdir_p(File.dirname(@db_file))
       connection = java.sql.DriverManager.get_connection("jdbc:sqlite:#{@db_file}")
+
+      set_busy_timeout(connection, 60000)
+
       yield Connection.new(connection)
     ensure
       if connection
@@ -62,6 +65,18 @@ class SQLiteDB
 
     def create_statement
       @jdbc_connection.create_statement
+    end
+  end
+
+  private
+
+  def set_busy_timeout(connection, timeout)
+    timeout_statement = nil
+    begin
+      timeout_statement = connection.prepare_statement("pragma busy_timeout=#{timeout}")
+      timeout_statement.execute
+    ensure
+      timeout_statement.close if timeout_statement
     end
   end
 
