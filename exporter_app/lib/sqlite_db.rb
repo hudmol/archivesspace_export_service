@@ -27,6 +27,10 @@ class SQLiteDB
   end
 
   class Connection
+
+    MAX_BUSY_RETRIES = 10
+    MAX_RETRY_WAIT_MS = 5000
+
     def initialize(jdbc_connection)
       jdbc_connection.set_auto_commit(true)
       @jdbc_connection = jdbc_connection
@@ -42,6 +46,7 @@ class SQLiteDB
     end
 
     def prepare(sql, arguments = [])
+      retries_remaining = MAX_BUSY_RETRIES
       statement = @jdbc_connection.prepare_statement(sql)
 
       arguments.each_with_index do |argument, i|
@@ -57,8 +62,22 @@ class SQLiteDB
       end
 
       yield statement
-    rescue java.sql.SQLException
-      @log.error("SQL failed: #{sql}: #{$!}")
+
+    rescue java.sql.SQLException => e
+      if retries_remaining > 0 && e.message.to_s =~ /SQLITE_BUSY/
+        statement.close if statement
+        statement = nil
+
+        sleep(rand(MAX_RETRY_WAIT_MS) / 1000.0)
+        retries_remaining -= 1
+
+        @log.info("Database was locked when we tried to write.  We'll retry shortly! (remaining retries: #{retries_remaining})...")
+
+        retry
+      end
+
+      @log.error("SQL failed: #{sql}: #{e}")
+
     ensure
       statement.close if statement
     end
