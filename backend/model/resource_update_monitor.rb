@@ -1,5 +1,53 @@
 class ResourceUpdateMonitor
 
+  CHANGED_RECORD_QUERIES = {
+
+    :updated_resources =>
+      ('select DISTINCT r.id, r.title, r.identifier, r.ead_id, r.repo_id, r.publish, r.suppressed' +
+       ' from resource r' +
+       ' where system_mtime >= ?'),
+
+    :updated_archival_objects =>
+      ('select DISTINCT r.id, r.title, r.identifier, r.ead_id, r.repo_id, r.publish, r.suppressed ' +
+       ' from resource r' +
+       ' inner join archival_object ao on ao.root_record_id = r.id' +
+       ' where ao.system_mtime >= ?'),
+
+    :updated_digital_object_via_resource =>
+      ('select DISTINCT r.id, r.title, r.identifier, r.ead_id, r.repo_id, r.publish, r.suppressed' +
+       ' from digital_object do' +
+       ' inner join instance_do_link_rlshp rlshp on rlshp.digital_object_id = do.id' +
+       ' inner join instance i on i.id = rlshp.instance_id' +
+       ' inner join resource r on r.id = i.resource_id' +
+       ' where do.system_mtime >= ?'),
+
+    :updated_digital_object_via_ao =>
+      ('select DISTINCT r.id, r.title, r.identifier, r.ead_id, r.repo_id, r.publish, r.suppressed from digital_object do' +
+       ' inner join instance_do_link_rlshp rlshp on rlshp.digital_object_id = do.id' +
+       ' inner join instance i on i.id = rlshp.instance_id' +
+       ' inner join archival_object ao on ao.id = i.archival_object_id' +
+       ' inner join resource r on r.id = ao.root_record_id' +
+       ' where do.system_mtime >= ?'),
+
+    :updated_digital_object_component_via_resource =>
+      ('select DISTINCT r.id, r.title, r.identifier, r.ead_id, r.repo_id, r.publish, r.suppressed from digital_object_component doc' +
+       ' inner join digital_object do on doc.root_record_id = do.id' +
+       ' inner join instance_do_link_rlshp rlshp on rlshp.digital_object_id = do.id' +
+       ' inner join instance i on i.id = rlshp.instance_id' +
+       ' inner join resource r on r.id = i.resource_id' +
+       ' where doc.system_mtime >= ?'),
+
+    :updated_digital_object_component_via_ao =>
+      ('select DISTINCT r.id, r.title, r.identifier, r.ead_id, r.repo_id, r.publish, r.suppressed from digital_object_component doc' +
+       ' inner join digital_object do on doc.root_record_id = do.id' +
+       ' inner join instance_do_link_rlshp rlshp on rlshp.digital_object_id = do.id' +
+       ' inner join instance i on i.id = rlshp.instance_id' +
+       ' inner join archival_object ao on ao.id = i.archival_object_id' +
+       ' inner join resource r on r.id = ao.root_record_id' +
+       ' where doc.system_mtime >= ?'),
+  }
+
+
   include JSONModel
 
   def initialize()
@@ -52,54 +100,52 @@ class ResourceUpdateMonitor
 
 
   def updates_since(timestamp)
-    adds = []
+    adds = {}
     removes = []
     mtime = Time.at(timestamp)
 
     DB.open do |db|
-      mods = db[:resource]
-               .left_join(:archival_object, :archival_object__root_record_id => :resource__id)
-               .left_join(:instance) {
-                  { Sequel.qualify(:instance, :resource_id) => :resource__id } |
-                  { Sequel.qualify(:instance, :archival_object_id) => :archival_object__id }
-               }.left_join(:instance_do_link_rlshp, :instance_do_link_rlshp__instance_id => :instance__id)
-               .left_join(:digital_object, :digital_object__id => :instance_do_link_rlshp__digital_object_id)
-               .left_join(:digital_object_component, :digital_object_component__root_record_id => :digital_object__id)
-               .where { (Sequel.qualify(:resource, :system_mtime) > mtime) |
-                        (Sequel.qualify(:archival_object, :system_mtime) > mtime) |
-                        (Sequel.qualify(:digital_object, :system_mtime) > mtime) |
-                        (Sequel.qualify(:digital_object_component, :system_mtime) > mtime)
-               }
 
-      if @repo_id
-        mods = mods.where(:resource__repo_id => @repo_id)
-      end
+      CHANGED_RECORD_QUERIES.each do |_, query_sql|
 
-      if @start_id && !@end_id
-        mods = mods.where(:resource__identifier => @start_id)
-      end
+        sql = query_sql
+        params = [mtime]
 
-      mods = mods.select(:resource__id, :resource__title, :resource__identifier, :resource__ead_id, :resource__repo_id, :resource__publish, :resource__suppressed)
+        if @repo_id
+          sql += ' AND r.repo_id in (%s)' % Array(@repo_id).map {|_| "?"}.join(', ')
+          params.concat(Array(@repo_id))
+        end
 
-      mods.distinct.each do |res|
-        if in_range(res)
-          if res[:publish] == 1 && res[:suppressed] == 0
-            adds << {
-              'id' => res[:id],
-              'title' => res[:title],
-              'ead_id' => res[:ead_id],
-              'identifier' => JSON.parse(res[:identifier]),
-              'repo_id' => res[:repo_id],
-              'uri' => JSONModel(:resource).uri_for(res[:id], :repo_id => res[:repo_id]),
-            }
-          else
-            removes << res[:id]
+        if @start_id && !@end_id
+          sql += mods.where(' AND r.identifier = ?')
+          params << @start_id
+        end
+
+        ds = db[sql, *params]
+        mods = ds.call(:select)
+
+        mods.each do |res|
+          next if adds.include?(res[:id])
+
+          if in_range(res)
+            if res[:publish] == 1 && res[:suppressed] == 0
+              adds[res[:id]] = {
+                'id' => res[:id],
+                'title' => res[:title],
+                'ead_id' => res[:ead_id],
+                'identifier' => JSON.parse(res[:identifier]),
+                'repo_id' => res[:repo_id],
+                'uri' => JSONModel(:resource).uri_for(res[:id], :repo_id => res[:repo_id]),
+              }
+            else
+              removes << res[:id]
+            end
           end
         end
       end
 
       dels = db[:deleted_records].where(Sequel.qualify(:deleted_records, :timestamp) > mtime)
-        .select(:uri)
+             .select(:uri)
 
       dels.each do |res|
         ref = JSONModel.parse_reference(res[:uri])
@@ -115,7 +161,7 @@ class ResourceUpdateMonitor
 
     end
 
-    {'timestamp' => timestamp, 'adds' => adds, 'removes' => removes}
+    {'timestamp' => timestamp, 'adds' => adds.values, 'removes' => removes}
   end
 
 end
