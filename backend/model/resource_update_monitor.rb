@@ -178,6 +178,9 @@ class ResourceUpdateMonitor
              .select(:uri)
 
       dels.each do |res|
+        # If this tombstone contains a '#', it refers to a nested record.  Not interested.
+        next if res[:uri] =~ /#/
+
         ref = JSONModel.parse_reference(res[:uri])
         if ref[:type] == 'resource'
           diagnostics.event("RESOURCE_TOMBSTONE", :res => res, :ref => ref)
