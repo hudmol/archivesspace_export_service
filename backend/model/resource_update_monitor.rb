@@ -1,3 +1,6 @@
+require 'base64'
+require 'zlib'
+
 class ResourceUpdateMonitor
 
   CHANGED_RECORD_QUERIES = {
@@ -99,10 +102,30 @@ class ResourceUpdateMonitor
   end
 
 
+  # Temporary information gathering...
+  class Diagnostics
+    def initialize
+      @events = []
+    end
+
+    def event(event, opts = {})
+      @events << opts.merge(:event => event)
+    end
+
+    def dump
+      Base64.encode64(Zlib::Deflate.deflate(@events.to_json))
+    end
+  end
+
+
   def updates_since(timestamp)
     adds = {}
     removes = []
     mtime = Time.at(timestamp)
+
+    diagnostics = Diagnostics.new
+
+    diagnostics.event("UPDATES_SINCE", :timestamp => timestamp)
 
     DB.open do |db|
 
@@ -124,11 +147,17 @@ class ResourceUpdateMonitor
         ds = db[sql, *params]
         mods = ds.call(:select)
 
+        diagnostics.event("QUERY", :sql => sql, :params => params)
+
         mods.each do |res|
+          diagnostics.event("GOT_RESOURCE", :id => res[:id], :publish => res[:publish], :suppressed => res[:suppressed])
           next if adds.include?(res[:id])
+          diagnostics.event("RESOURCE_NOT_YET_ADDED", :id => res[:id])
 
           if in_range(res)
+            diagnostics.event("RESOURCE_IN_RANGE", :id => res[:id])
             if res[:publish] == 1 && res[:suppressed] == 0
+              diagnostics.event("PUBLISHED_AND_UNSUPPRESSED", :id => res[:id])
               adds[res[:id]] = {
                 'id' => res[:id],
                 'title' => res[:title],
@@ -138,6 +167,7 @@ class ResourceUpdateMonitor
                 'uri' => JSONModel(:resource).uri_for(res[:id], :repo_id => res[:repo_id]),
               }
             else
+              diagnostics.event("UNPUBLISHED_OR_SUPPRESSED", :id => res[:id])
               removes << res[:id]
             end
           end
@@ -148,12 +178,22 @@ class ResourceUpdateMonitor
              .select(:uri)
 
       dels.each do |res|
+        # If this tombstone contains a '#', it refers to a nested record.  Not interested.
+        next if res[:uri] =~ /#/
+
         ref = JSONModel.parse_reference(res[:uri])
         if ref[:type] == 'resource'
+          diagnostics.event("RESOURCE_TOMBSTONE", :res => res, :ref => ref)
           if @repo_id
             repo = JSONModel.parse_reference(ref[:repository])
-            removes << ref[:id] if @repo_id == repo[:id]
+            if @repo_id == repo[:id]
+              diagnostics.event("RECORD_REPO_REMOVE", :res => res)
+              removes << ref[:id]
+            else
+              diagnostics.event("SKIP_REPO_REMOVE", :res => res)
+            end
           else
+            diagnostics.event("RECORD_GLOBAL_REMOVE", :res => res)
             removes << ref[:id]
           end
         end
@@ -161,7 +201,7 @@ class ResourceUpdateMonitor
 
     end
 
-    {'timestamp' => timestamp, 'adds' => adds.values, 'removes' => removes}
+    {'timestamp' => timestamp, 'adds' => adds.values, 'removes' => removes, 'diagnostic' => diagnostics.dump}
   end
 
 end
