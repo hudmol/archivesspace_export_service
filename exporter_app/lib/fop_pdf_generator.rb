@@ -24,7 +24,7 @@ class FopPdfGenerator < HookInterface
         pdf_file = File.join(full_export_path, "#{identifier}.pdf")
         pdf_tmp_file = "#{pdf_file}.tmp"
 
-        if File.exist?(pdf_file) && File.mtime(ead_file) < File.mtime(pdf_file)
+        if File.exist?(pdf_file) && File.mtime(ead_file) <= File.mtime(pdf_file)
           # PDF doesn't need updating
           next
         end
