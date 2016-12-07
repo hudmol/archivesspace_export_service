@@ -138,8 +138,8 @@ class SQLiteWorkQueue
       #
       # Note: previously we just kept the first one, but there's additional
       # metadata that we get from the plugin (such as the resource 4-part
-      # identifier) that we want to be as up-to-date as possible.  If delete all
-      # but the first row, we end up writing out EAD with the wrong
+      # identifier) that we want to be as up-to-date as possible.  If we delete
+      # all but the first row, we end up writing out EAD with the wrong
       # identifier/metadata.
       #
       # Taking the last identifier does mean the resource won't get exported as

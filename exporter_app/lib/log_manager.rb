@@ -27,7 +27,6 @@ class LogManager
     end
 
     def alert(message)
-      # FIXME: Send an email!
       @log.error(@progname) { message }
     end
 

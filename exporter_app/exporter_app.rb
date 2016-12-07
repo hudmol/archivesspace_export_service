@@ -21,8 +21,6 @@ class ExporterApp
 
     process_manager = ProcessManager.new
 
-    # last start time, last complete time
-
     puts "\nArchivesSpace exporter application started!"
     puts "\nLogging to #{@log_manager.log_file}\n"
 

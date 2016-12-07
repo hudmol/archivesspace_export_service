@@ -37,7 +37,6 @@ class ArchivesSpaceClient
 
     if uri.scheme == 'https'
       http.use_ssl = true
-      http.verify_mode = OpenSSL::SSL::VERIFY_NONE
     end
 
     response = http.start {|http| http.request(request) }

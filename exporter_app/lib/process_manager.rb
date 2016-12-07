@@ -22,7 +22,6 @@ class ProcessManager
 
   class Process
 
-    # THINKME: Maybe we don't need the ability to terminate from the outside like this?
     def initialize(job, completed_callback)
       @job = job
       @callback = completed_callback
@@ -64,7 +63,7 @@ class ProcessManager
             begin
               status = terminated? ? JobStatus::TERMINATED : status
 
-              # THINKME: This callback happens on a different thread
+              # NOTE: This callback happens on a different thread to the task itself
               @callback.call(@job, status)
             rescue
               log.error($!)
