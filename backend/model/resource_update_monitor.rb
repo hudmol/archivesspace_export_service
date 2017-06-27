@@ -3,18 +3,18 @@ class ResourceUpdateMonitor
   CHANGED_RECORD_QUERIES = {
 
     :updated_resources =>
-      ('select DISTINCT r.id, r.title, r.identifier, r.ead_id, r.repo_id, r.publish, r.suppressed' +
+      ('select DISTINCT r.id, r.title, r.identifier, r.ead_id, r.ead_location, r.repo_id, r.publish, r.suppressed' +
        ' from resource r' +
        ' where system_mtime >= ?'),
 
     :updated_archival_objects =>
-      ('select DISTINCT r.id, r.title, r.identifier, r.ead_id, r.repo_id, r.publish, r.suppressed ' +
+      ('select DISTINCT r.id, r.title, r.identifier, r.ead_id, r.ead_location, r.repo_id, r.publish, r.suppressed ' +
        ' from resource r' +
        ' inner join archival_object ao on ao.root_record_id = r.id' +
        ' where ao.system_mtime >= ?'),
 
     :updated_digital_object_via_resource =>
-      ('select DISTINCT r.id, r.title, r.identifier, r.ead_id, r.repo_id, r.publish, r.suppressed' +
+      ('select DISTINCT r.id, r.title, r.identifier, r.ead_id, r.ead_location, r.repo_id, r.publish, r.suppressed' +
        ' from digital_object do' +
        ' inner join instance_do_link_rlshp rlshp on rlshp.digital_object_id = do.id' +
        ' inner join instance i on i.id = rlshp.instance_id' +
@@ -22,7 +22,7 @@ class ResourceUpdateMonitor
        ' where do.system_mtime >= ?'),
 
     :updated_digital_object_via_ao =>
-      ('select DISTINCT r.id, r.title, r.identifier, r.ead_id, r.repo_id, r.publish, r.suppressed from digital_object do' +
+      ('select DISTINCT r.id, r.title, r.identifier, r.ead_id, r.ead_location, r.repo_id, r.publish, r.suppressed from digital_object do' +
        ' inner join instance_do_link_rlshp rlshp on rlshp.digital_object_id = do.id' +
        ' inner join instance i on i.id = rlshp.instance_id' +
        ' inner join archival_object ao on ao.id = i.archival_object_id' +
@@ -30,7 +30,7 @@ class ResourceUpdateMonitor
        ' where do.system_mtime >= ?'),
 
     :updated_digital_object_component_via_resource =>
-      ('select DISTINCT r.id, r.title, r.identifier, r.ead_id, r.repo_id, r.publish, r.suppressed from digital_object_component doc' +
+      ('select DISTINCT r.id, r.title, r.identifier, r.ead_id, r.ead_location, r.repo_id, r.publish, r.suppressed from digital_object_component doc' +
        ' inner join digital_object do on doc.root_record_id = do.id' +
        ' inner join instance_do_link_rlshp rlshp on rlshp.digital_object_id = do.id' +
        ' inner join instance i on i.id = rlshp.instance_id' +
@@ -38,7 +38,7 @@ class ResourceUpdateMonitor
        ' where doc.system_mtime >= ?'),
 
     :updated_digital_object_component_via_ao =>
-      ('select DISTINCT r.id, r.title, r.identifier, r.ead_id, r.repo_id, r.publish, r.suppressed from digital_object_component doc' +
+      ('select DISTINCT r.id, r.title, r.identifier, r.ead_id, r.ead_location, r.repo_id, r.publish, r.suppressed from digital_object_component doc' +
        ' inner join digital_object do on doc.root_record_id = do.id' +
        ' inner join instance_do_link_rlshp rlshp on rlshp.digital_object_id = do.id' +
        ' inner join instance i on i.id = rlshp.instance_id' +
@@ -133,6 +133,7 @@ class ResourceUpdateMonitor
                 'id' => res[:id],
                 'title' => res[:title],
                 'ead_id' => res[:ead_id],
+                'ead_location' => res[:ead_location],
                 'identifier' => JSON.parse(res[:identifier]),
                 'repo_id' => res[:repo_id],
                 'uri' => JSONModel(:resource).uri_for(res[:id], :repo_id => res[:repo_id]),

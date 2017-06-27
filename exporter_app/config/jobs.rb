@@ -23,6 +23,8 @@
                        :numbered_cs => false
                      },
 
+                     :generate_handles => true,
+
                      :xslt_transforms => ['config/transform.xslt'],
                      :validation_schema => ['config/ead.xsd'],
                      :schematron_checks => ['config/schematron.sch'],
