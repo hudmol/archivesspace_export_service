@@ -21,17 +21,28 @@ class ArchivesSpaceClient
     get("/repositories/#{repo_id}/resource_descriptions/#{id}.xml", opts)
   end
 
+  def update_record(uri, hash)
+    json_post(uri, json_get(uri).merge(hash), true)
+  end
+
   private
 
   def login
     json_post("/users/#{@username}/login", :password => @password, :expiring => false)['session']
   end
 
-  def json_post(path, params)
+  def json_post(path, params, body = false)
     uri = URI.join(@aspace_backend_url, @aspace_backend_path, path.gsub(/^\//,""))
 
     request = Net::HTTP::Post.new(uri)
-    request.form_data = params
+    request['X-ArchivesSpace-Session'] = @session if @session
+
+    if body
+      request['Content-Type'] = 'text/json'
+      request.body = JSON.generate(params)
+    else
+      request.form_data = params
+    end
 
     http = Net::HTTP.new(uri.host, uri.port)
 
@@ -75,7 +86,7 @@ class ArchivesSpaceClient
     response.body
   end
 
-  def json_get(uri, params)
+  def json_get(uri, params = {})
     JSON(get(uri, params))
   end
 end

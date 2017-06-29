@@ -7,6 +7,7 @@ class SQLiteWorkQueue
     {:name => 'title', :sqltype => 'text', :jdbctype => 'string'},
     {:name => 'uri', :sqltype => 'text', :jdbctype => 'string'},
     {:name => 'ead_id', :sqltype => 'text', :jdbctype => 'string'},
+    {:name => 'ead_location', :sqltype => 'text', :jdbctype => 'string'},
   ]
 
   def initialize(db_file)

@@ -1,3 +1,6 @@
+require 'bundler/setup'
+Bundler.require
+
 class ExporterApp
 
   POLL_INTERVAL = 60

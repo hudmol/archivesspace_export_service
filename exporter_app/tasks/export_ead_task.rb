@@ -7,6 +7,7 @@ require_relative 'lib/schematron_validator'
 require_relative 'lib/xslt_processor'
 require_relative 'lib/sqlite_work_queue'
 require_relative 'lib/archivesspace_client'
+require_relative 'lib/handle_client'
 require_relative 'lib/validation_failed_exception'
 
 class ExportEADTask < TaskInterface
@@ -30,6 +31,15 @@ class ExportEADTask < TaskInterface
 
     config = ExporterApp.config
     @as_client = ArchivesSpaceClient.new(config[:aspace_backend_url], config[:aspace_username], config[:aspace_password])
+
+    if (@generate_handles = task_params.fetch(:generate_handles, false))
+      @handle_client = HandleClient.new(config[:handle_wsdl_url],
+                                        config[:handle_user],
+                                        config[:handle_credential],
+                                        config[:handle_prefix],
+                                        config[:handle_group],
+                                        config[:handle_base])
+    end
 
     @commit_every_n_records = task_params.fetch(:commit_every_n_records, nil)
     @records_added = 0
@@ -66,6 +76,7 @@ class ExportEADTask < TaskInterface
     while (still_running = process.running?) && !max_records_hit? && (item = @work_queue.next)
       if item[:action] == 'add'
         begin
+          ensure_handle(item) if @generate_handles
           download_ead(item)
           create_manifest_json(item)
         rescue SkipRecordException
@@ -150,6 +161,20 @@ class ExportEADTask < TaskInterface
     FileUtils.mkdir_p(output_directory)
 
     File.join(output_directory, "#{basename}.#{extension}")
+  end
+
+  def ensure_handle(item)
+    @log.info("Ensuring there is a handle for #{item[:uri]}")
+    @log.debug("ead_id: '#{item[:ead_id]}', ead_location: '#{item[:ead_location]}'")
+
+    if !item[:ead_location] && item[:ead_id]
+      handle = @handle_client.create_handle(item[:ead_id], item[:uri])
+      @log.debug("Created handle: #{handle}")
+      response = @as_client.update_record(item[:uri], 'ead_location' => handle)
+      @log.debug("Updated resource: #{response}")
+    else
+      @log.debug("No need to create handle")
+    end
   end
 
   def download_ead(item)
