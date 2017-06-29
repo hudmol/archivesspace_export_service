@@ -46,14 +46,14 @@ class HandleClient
       <handlesToValues>
         <map>
           <entry>
-            <key>#{handle}</key>
-            <value>#{@handle_base}#{uri}</value>
+            <key>#{handle.encode(:xml => :text)}</key>
+            <value>#{@handle_base.encode(:xml => :text)}#{uri.encode(:xml => :text)}</value>
           </entry>
         </map>
       </handlesToValues>
-      <group>#{@group}</group>
-      <user>#{@user}</user>
-      <credential>#{@credential}</credential>
+      <group>#{@group.encode(:xml => :text)}</group>
+      <user>#{@user.encode(:xml => :text)}</user>
+      <credential>#{@credential.encode(:xml => :text)}</credential>
     </tns:createBatchSemantic>
   </env:Body>
 </env:Envelope>
