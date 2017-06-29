@@ -61,6 +61,22 @@ And shut it down like this:
     $ cd /path/to/archivesspace_export_service/exporter_app
     $ bin/shutdown.sh
 
+The exporter application now uses gems. If running from source
+you will need to dowload the required gems like this:
+
+    $ cd /path/to/archivesspace_export_service/exporter_app
+    $ bin/bootstrap.sh
+
+This step is not required if running from a distributed release.
+
+UPGRADE NOTE: If upgrading from v1.0, you will need to remove
+the ead export work queue database before starting the application,
+like this:
+
+    $ cd /path/to/archivesspace_export_service/exporter_app
+    $ rm workspace/ead/db/ead_export.sqlite
+
+
 See below for configuration options.
 
 
@@ -86,6 +102,24 @@ Also note that the url is to the ArchivesSpace *backend*, not the
 frontend web UI. If the Exporter Application is deployed on a
 different machine from ArchivesSpace you may need to configure your
 firewall to open the backend port.
+
+If you intend to use the Handle creation feature, you will also
+need to set some handle related configuration options, like this:
+
+    {
+      handle_wsdl_url: 'http://link.its.yale.edu/ypls-ws/PersistentLinking?wsdl',
+      handle_user: '10079.1/FA',
+      handle_credential: '[YOUR CREDENTIAL]',
+      handle_prefix: '10079.1/fa',
+      handle_group: '10079.1/FA',
+      handle_base: 'http://archives.yale.edu',
+    }
+
+And if using Handles, the configured ArchivesSpace user (`a_user` above)
+will need permissions to update resources on any ArchivesSpace repository
+from which resources will be exported, in addition to the permission
+discussed above. This is because generated Handles are written back to
+the resource (in the ead_location field).
 
 
 ## How it works
@@ -234,6 +268,12 @@ of `:task_parameters`.  These are as follows:
         tags (default: false)
 
       * `:numbered_cs` - Use numbered c tags in ead (default: false)
+
+  * `:generate_handles` - If set to `true` then a Handle will be created
+    immediately before export for any resources that have a value in
+    `ead_id` but do not have a value in `ead_location`. The created
+    Handle will be written back to the resource in the `ead_location`
+    field.
 
 The sample `jobs.rb` file shows a fully configured ExportEADTask which
 makes use of `:after_hooks` (described below) to additionally produce
