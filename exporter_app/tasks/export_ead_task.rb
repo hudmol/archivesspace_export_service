@@ -168,10 +168,14 @@ class ExportEADTask < TaskInterface
     @log.debug("ead_id: '#{item[:ead_id]}', ead_location: '#{item[:ead_location]}'")
 
     if !item[:ead_location] && item[:ead_id]
-      handle = @handle_client.create_handle(item[:ead_id], item[:uri])
-      @log.info("Created handle: #{handle} for #{item[:uri]}")
-      response = @as_client.update_record(item[:uri], 'ead_location' => handle)
-      @log.debug("Updated resource: #{response}")
+      begin
+        handle = @handle_client.create_handle(item[:ead_id], item[:uri])
+        @log.info("Created handle: #{handle} for #{item[:uri]}")
+        response = @as_client.update_record(item[:uri], 'ead_location' => handle)
+        @log.debug("Updated resource: #{response}")
+      rescue
+        @log.error("Failed to create handle for #{item[:uri]}: #{$!}")
+      end
     else
       @log.debug("No need to create handle")
     end
