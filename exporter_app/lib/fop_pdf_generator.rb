@@ -7,6 +7,7 @@ class FopPdfGenerator < HookInterface
     @xslt_file = File.absolute_path(xslt_file)
     @log = ExporterApp.log_for(self.class.to_s)
     @no_git = opts.fetch(:no_git, false)
+    @xconf_file = opts.has_key?(:xconf_file) ? File.absolute_path(opts[:xconf_file]) : false
   end
 
   def call(task)
@@ -42,7 +43,12 @@ class FopPdfGenerator < HookInterface
           builder = org.apache.fop.apps.FopFactoryBuilder.new(java.net.URI.new("file://#{File.dirname(@xslt_file)}"))
 
           config_builder = org.apache.avalon.framework.configuration.DefaultConfigurationBuilder.new
-          config = config_builder.build(java.io.ByteArrayInputStream.new(generate_font_config.to_java.get_bytes("UTF-8")))
+
+          config = if (@xconf_file)
+                     config_builder.buildFromFile(java.io.File.new(@xconf_file))
+                   else
+                     config_builder.build(java.io.ByteArrayInputStream.new(generate_font_config.to_java.get_bytes("UTF-8")))
+                   end
 
           builder.set_configuration(config)
 

@@ -35,7 +35,7 @@
                    ],
 
                    :after_hooks => [
-                     FopPdfGenerator.new('config/as-ead-pdf.xsl', :no_git => true),
+                     FopPdfGenerator.new('config/as-ead-pdf.xsl', :no_git => true, :xconf_file => 'config/fop.xconf'),
                      ErbRenderer.new("templates/manifest.md.erb", "README.md"),
                      ShellRunner.new("scripts/commit_workspace.sh"),
                    ]),
