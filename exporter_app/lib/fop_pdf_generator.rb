@@ -3,25 +3,28 @@ require_relative 'hook_interface'
 
 class FopPdfGenerator < HookInterface
 
-  def initialize(xslt_file)
+  def initialize(xslt_file, opts = {})
     @xslt_file = File.absolute_path(xslt_file)
     @log = ExporterApp.log_for(self.class.to_s)
+    @no_git = opts.fetch(:no_git, false)
   end
 
   def call(task)
+    workspace_directory = task.exported_variables.fetch(:workspace_directory)
     export_directory = task.exported_variables.fetch(:export_directory)
     subdirectory = task.exported_variables.fetch(:subdirectory)
 
-    full_export_path = File.join(export_directory, subdirectory)
+    ead_export_path = File.join(export_directory, subdirectory)
+    pdf_export_path = @no_git ? File.join(workspace_directory, 'pdf') : ead_export_path
 
-    json_files(full_export_path).each do |json_file|
+    json_files(ead_export_path).each do |json_file|
       begin
         json = JSON.parse(File.read(json_file))
 
-        ead_file =  File.join(full_export_path, json.fetch('ead_file'))
+        ead_file =  File.join(ead_export_path, json.fetch('ead_file'))
         identifier = File.basename(ead_file, '.*')
-        fop_file = File.join(full_export_path, "#{identifier}.fop")
-        pdf_file = File.join(full_export_path, "#{identifier}.pdf")
+        fop_file = File.join(pdf_export_path, "#{identifier}.fop")
+        pdf_file = File.join(pdf_export_path, "#{identifier}.pdf")
         pdf_tmp_file = "#{pdf_file}.tmp"
 
         if File.exist?(pdf_file) && File.mtime(ead_file) < File.mtime(pdf_file)
