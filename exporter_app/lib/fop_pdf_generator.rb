@@ -54,10 +54,8 @@ class FopPdfGenerator < HookInterface
 
           fop_factory = builder.build
 
-          fop = fop_factory.newFop(org.apache.fop.apps.MimeConstants::MIME_PDF, output_stream)
-
           agent = fop_factory.newFOUserAgent
-          agent.setTitle(json.fetch('title'))
+          agent.setAccessibility(true) if (config.getChild('accessibility', false) && config.getChild('accessibility').getValue() == 'true')
           agent.setCreationDate(File.mtime(ead_file).to_java(java.util.Date))
 
           fop = fop_factory.newFop(org.apache.fop.apps.MimeConstants::MIME_PDF, agent, output_stream)
