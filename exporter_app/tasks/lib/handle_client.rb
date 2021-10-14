@@ -42,7 +42,7 @@ class HandleClient
     <<-EOT
 <env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
   <env:Body>
-    <tns:createBatchSemantic xmlns:tns="http://ws.ypls.its.yale.edu/">
+    <tns:createBatchSemantic xmlns:tns="http://ws.ypls.dam.its.yale.edu/">
       <handlesToValues>
         <map>
           <entry>
