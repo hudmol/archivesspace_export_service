@@ -42,7 +42,7 @@ class FopPdfGenerator < HookInterface
 
           builder = org.apache.fop.apps.FopFactoryBuilder.new(java.net.URI.new("file://#{File.dirname(@xslt_file)}"))
 
-          config_builder = org.apache.avalon.framework.configuration.DefaultConfigurationBuilder.new
+          config_builder = org.apache.fop.configuration.DefaultConfigurationBuilder.new
 
           config = if (@xconf_file)
                      config_builder.buildFromFile(java.io.File.new(@xconf_file))

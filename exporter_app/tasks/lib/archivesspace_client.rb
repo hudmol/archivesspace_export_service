@@ -1,5 +1,4 @@
-require 'net/http'
-require 'net/https'
+require 'manticore'
 require 'json'
 
 class ArchivesSpaceClient
@@ -34,25 +33,19 @@ class ArchivesSpaceClient
   def json_post(path, params, body = false)
     uri = URI.join(@aspace_backend_url, @aspace_backend_path, path.gsub(/^\//,""))
 
-    request = Net::HTTP::Post.new(uri)
-    request['X-ArchivesSpace-Session'] = @session if @session
+    headers = {}
 
-    if body
-      request['Content-Type'] = 'text/json'
-      request.body = JSON.generate(params)
-    else
-      request.form_data = params
+    if @session
+      headers['X-ArchivesSpace-Session'] = @session
     end
 
-    http = Net::HTTP.new(uri.host, uri.port)
+    response = if body
+                 Manticore.post(uri.to_s, params: params, headers: headers.merge('Content-Type' => 'text/json'), body: body)
+               else
+                 Manticore.post(uri.to_s, params: params, headers: headers)
+               end
 
-    if uri.scheme == 'https'
-      http.use_ssl = true
-    end
-
-    response = http.start {|http| http.request(request) }
-
-    if response.code != '200'
+    if response.code != 200
       raise "#{response.code}: #{response.body}"
     end
 
@@ -63,23 +56,15 @@ class ArchivesSpaceClient
     @session = login unless @session
 
     uri = URI.join(@aspace_backend_url, @aspace_backend_path, path.gsub(/^\//,""))
-    uri.query = URI.encode_www_form(params)
 
-    http = Net::HTTP.new(uri.host, uri.port)
+    response = Manticore.get(uri.to_s,
+                             query: params,
+                             headers: { 'X-ArchivesSpace-Session' => @session },
+                             :connect_timeout => 600.0,
+                             :socket_timeout => 600.0,
+                             :request_timeout => 600.0)
 
-    http.read_timeout = 600
-    http.open_timeout = 600
-
-    if uri.scheme == 'https'
-      http.use_ssl = true
-    end
-
-    request = Net::HTTP::Get.new(uri)
-    request['X-ArchivesSpace-Session'] = @session
-
-    response = http.start {|http| http.request(request) }
-
-    if response.code != '200'
+    if response.code != 200
       raise "#{response.code}: #{response.body}"
     end
 

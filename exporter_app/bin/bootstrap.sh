@@ -7,6 +7,6 @@ export GEM_PATH="$BASEDIR/gems"
 
 cd "$BASEDIR"
 
-java -cp bin/jruby-complete-9.1.0.0.jar org.jruby.Main -S gem install bundler
+java -cp 'bin/*' org.jruby.Main -S gem install bundler
 
-java -cp bin/jruby-complete-9.1.0.0.jar org.jruby.Main gems/bin/bundle install
+java -cp 'bin/*' org.jruby.Main gems/bin/bundle install
