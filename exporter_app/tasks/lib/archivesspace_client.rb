@@ -21,7 +21,7 @@ class ArchivesSpaceClient
   end
 
   def update_record(uri, hash)
-    json_post(uri, json_get(uri).merge(hash), true)
+    json_post(uri, {}, JSON.generate(json_get(uri).merge(hash)), 'text/json')
   end
 
   private
@@ -30,7 +30,7 @@ class ArchivesSpaceClient
     json_post("/users/#{@username}/login", :password => @password, :expiring => false)['session']
   end
 
-  def json_post(path, params, body = false)
+  def json_post(path, params = {}, body = :no_body, content_type = :no_content_type)
     uri = URI.join(@aspace_backend_url, @aspace_backend_path, path.gsub(/^\//,""))
 
     headers = {}
@@ -39,10 +39,11 @@ class ArchivesSpaceClient
       headers['X-ArchivesSpace-Session'] = @session
     end
 
-    response = if body
-                 Manticore.post(uri.to_s, params: params, headers: headers.merge('Content-Type' => 'text/json'), body: body)
-               else
+    response = if body == :no_body
                  Manticore.post(uri.to_s, params: params, headers: headers)
+               else
+                 headers['Content-Type'] = content_type if content_type != :no_content_type
+                 Manticore.post(uri.to_s, params: params, headers: headers, body: body)
                end
 
     if response.code != 200
