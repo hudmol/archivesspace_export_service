@@ -42,8 +42,12 @@ class ArchivesSpaceClient
     response = if body == :no_body
                  Manticore.post(uri.to_s, params: params, headers: headers)
                else
+                 unless params.empty?
+                   raise "Manticore doesn't support sending both params and body"
+                 end
+
                  headers['Content-Type'] = content_type if content_type != :no_content_type
-                 Manticore.post(uri.to_s, params: params, headers: headers, body: body)
+                 Manticore.post(uri.to_s, headers: headers, body: body)
                end
 
     if response.code != 200
