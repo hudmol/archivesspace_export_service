@@ -2,7 +2,7 @@ require 'savon'
 
 class HandleClient
 
-  HANDLE_HOST = 'http://hdl.handle.net'
+  HANDLE_HOST = 'https://hdl.handle.net'
 
   def initialize(wsdl_url, user, credential, prefix, group, handle_base)
     @wsdl_url = wsdl_url
